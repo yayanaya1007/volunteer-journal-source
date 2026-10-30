@@ -74,6 +74,7 @@ function renderPage(state, requestedPage) {
   const page = Math.max(1, Math.min(state.total, Number(requestedPage) || 1));
   if (page === state.page && state.image.src) return;
   try {
+    state.container.scrollTop = 0;
     const svg = state.doc.renderPageSvg(page - 1);
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
     if (state.svgUrl) URL.revokeObjectURL(state.svgUrl);
