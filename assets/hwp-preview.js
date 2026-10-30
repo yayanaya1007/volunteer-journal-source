@@ -51,6 +51,40 @@ function readStoredFile(id) {
   });
 }
 
+globalThis.extractHwpEmbeddedMedia = async (bytes, pages) => {
+  await initializeRenderer();
+  const doc = new HwpDocument(bytes);
+  try {
+    correctRendererOverflow(doc);
+    const pageCount = doc.pageCount();
+    if (pageCount !== pages.length) return { pageCount, pages: [] };
+    const pageHeight = JSON.parse(doc.getPageDef(0)).height / 75;
+    const extracted = [];
+    for (let index = 0; index < pageCount; index++) {
+      const sourcePage = pages[index] || {};
+      const result = { page: index + 1, photos: [] };
+      doc.getPageSourceImageKeys(index);
+      const signatureText = /서명|날인|제출자/.test(sourcePage.text || '');
+      const pageImages = JSON.parse(doc.getPageFlowImageOps(index)).images || [];
+      for (const image of pageImages) {
+        if (!/^image\/(?:jpeg|png)$/i.test(image.mime || '')) continue;
+        const source = doc.getSourceImageBytes(image.sourceImageKey);
+        if (!source?.length) continue;
+        const blob = new Blob([source], { type: image.mime });
+        let bitmap;
+        try { bitmap = await createImageBitmap(blob); } catch { continue; }
+        const signatureAspect = bitmap.width / Math.max(1, bitmap.height);
+        const isSignature = signatureText && image.bbox.y > pageHeight * 0.80 && image.bbox.width < 260 && image.bbox.height < 120 && bitmap.width <= 1200 && bitmap.height <= 500 && signatureAspect >= 1.2;
+        if (isSignature) result.signature = blob;
+        else if (bitmap.width >= 80 && bitmap.height >= 80 && bitmap.width * bitmap.height <= 20000000) result.photos.push(blob);
+        bitmap.close();
+      }
+      extracted.push(result);
+    }
+    return { pageCount, pages: extracted };
+  } finally { doc.free(); }
+};
+
 function updatePageLink(state, url) {
   const link = state.container.closest('.source-view')?.querySelector('.source-heading a');
   if (link) link.href = url;
