@@ -56,6 +56,27 @@ function updatePageLink(state, url) {
   if (link) link.href = url;
 }
 
+function correctRendererOverflow(doc) {
+  const pageCount = doc.pageCount();
+  const sections = doc.getSectionCount();
+  const originalDefs = [];
+  try {
+    for (let section = 0; section < sections; section++) {
+      const pageDef = JSON.parse(doc.getPageDef(section));
+      originalDefs.push(pageDef);
+      pageDef.height = Math.ceil(pageDef.height * 1.07);
+      doc.setPageDef(section, JSON.stringify(pageDef));
+    }
+    if (doc.pageCount() < pageCount) return;
+  } catch {
+    // Keep the renderer's original pagination if the document has an
+    // unsupported section definition.
+  }
+  for (let section = 0; section < originalDefs.length; section++) {
+    try { doc.setPageDef(section, JSON.stringify(originalDefs[section])); } catch {}
+  }
+}
+
 function updatePager(state, page) {
   const picker = document.querySelector('.source-picker .page-stepper');
   if (!picker) return;
@@ -134,12 +155,14 @@ function mount(container) {
         doc.free();
         return;
       }
-      const total = doc.pageCount();
+      let total = doc.pageCount();
       if (!total) {
         doc.free();
         throw new Error('원본 문서의 쪽 수를 읽지 못했습니다.');
       }
       state.doc = doc;
+      correctRendererOverflow(doc);
+      total = doc.pageCount();
       state.total = total;
       renderPage(state, Number(container.dataset.page) || page);
     } catch (error) {
