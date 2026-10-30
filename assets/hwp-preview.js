@@ -55,10 +55,11 @@ globalThis.extractHwpEmbeddedMedia = async (bytes, pages) => {
   await initializeRenderer();
   const doc = new HwpDocument(bytes);
   try {
+    const originalPageHeight = JSON.parse(doc.getPageDef(0)).height / 75;
     correctRendererOverflow(doc);
     const pageCount = doc.pageCount();
     if (pageCount !== pages.length) return { pageCount, pages: [] };
-    const pageHeight = JSON.parse(doc.getPageDef(0)).height / 75;
+    const pageHeight = originalPageHeight;
     const extracted = [];
     for (let index = 0; index < pageCount; index++) {
       const sourcePage = pages[index] || {};
