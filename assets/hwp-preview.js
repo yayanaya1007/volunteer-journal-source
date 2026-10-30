@@ -1,0 +1,183 @@
+import initHwp, { HwpDocument } from './rhwp-VciUJEJo.js';
+
+const states = new Map();
+let initPromise;
+let measureContext;
+let measureFont = '';
+
+function installTextMeasure() {
+  globalThis.measureTextWidth = (font, text) => {
+    measureContext ||= document.createElement('canvas').getContext('2d');
+    if (!measureContext) return 0;
+    if (font !== measureFont) {
+      measureContext.font = font;
+      measureFont = font;
+    }
+    return measureContext.measureText(text).width;
+  };
+}
+
+function initializeRenderer() {
+  installTextMeasure();
+  initPromise ||= initHwp();
+  return initPromise;
+}
+
+function readStoredFile(id) {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('volunteer-journal-files', 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains('files')) request.result.createObjectStore('files');
+    };
+    request.onerror = () => reject(request.error || new Error('저장된 원본 파일을 열지 못했습니다.'));
+    request.onsuccess = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('files')) {
+        db.close();
+        reject(new Error('저장된 원본 파일을 찾지 못했습니다.'));
+        return;
+      }
+      const get = db.transaction('files', 'readonly').objectStore('files').get(id);
+      get.onsuccess = () => {
+        db.close();
+        if (get.result) resolve(get.result);
+        else reject(new Error('저장된 원본 파일을 찾지 못했습니다. 파일을 다시 올려 주세요.'));
+      };
+      get.onerror = () => {
+        db.close();
+        reject(get.error || new Error('저장된 원본 파일을 읽지 못했습니다.'));
+      };
+    };
+  });
+}
+
+function updatePageLink(state, url) {
+  const link = state.container.closest('.source-view')?.querySelector('.source-heading a');
+  if (link) link.href = url;
+}
+
+function updatePager(state, page) {
+  const picker = document.querySelector('.source-picker .page-stepper');
+  if (!picker) return;
+  const input = picker.querySelector('input[aria-label="원본 페이지"]');
+  const buttons = picker.querySelectorAll('button');
+  if (input) {
+    input.max = String(state.total);
+    input.value = String(page);
+  }
+  if (buttons[0]) buttons[0].disabled = page <= 1;
+  if (buttons[1]) buttons[1].disabled = page >= state.total;
+}
+
+function renderPage(state, requestedPage) {
+  if (!state.doc || !state.total) return;
+  const page = Math.max(1, Math.min(state.total, Number(requestedPage) || 1));
+  if (page === state.page && state.image.src) return;
+  try {
+    const svg = state.doc.renderPageSvg(page - 1);
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+    if (state.svgUrl) URL.revokeObjectURL(state.svgUrl);
+    state.svgUrl = url;
+    state.page = page;
+    state.image.alt = `원본 한글 문서 ${page}쪽`;
+    state.image.src = url;
+    state.image.hidden = false;
+    state.status.hidden = true;
+    state.container.dataset.page = String(page);
+    updatePageLink(state, url);
+    updatePager(state, page);
+  } catch (error) {
+    state.status.hidden = false;
+    state.status.textContent = error instanceof Error ? error.message : '원본 쪽을 그리지 못했습니다.';
+    state.image.hidden = true;
+  }
+}
+
+function dispose(container) {
+  const state = states.get(container);
+  if (!state) return;
+  state.cancelled = true;
+  state.doc?.free();
+  if (state.svgUrl) URL.revokeObjectURL(state.svgUrl);
+  states.delete(container);
+}
+
+function mount(container) {
+  const id = container.dataset.sourceId;
+  if (!id) return;
+  const page = Number(container.dataset.page) || 1;
+  const current = states.get(container);
+  if (current?.id === id) {
+    renderPage(current, page);
+    return;
+  }
+  dispose(container);
+
+  const status = document.createElement('div');
+  status.className = 'hwp-preview-status';
+  status.textContent = '원본 한글 문서를 여는 중입니다.';
+  const image = document.createElement('img');
+  image.alt = '원본 한글 문서';
+  image.hidden = true;
+  container.replaceChildren(status, image);
+
+  const state = { id, container, status, image, doc: null, total: 0, page: 0, svgUrl: '', cancelled: false };
+  states.set(container, state);
+  void (async () => {
+    try {
+      const file = await readStoredFile(id);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      await initializeRenderer();
+      const doc = new HwpDocument(bytes);
+      if (state.cancelled) {
+        doc.free();
+        return;
+      }
+      const total = doc.pageCount();
+      if (!total) {
+        doc.free();
+        throw new Error('원본 문서의 쪽 수를 읽지 못했습니다.');
+      }
+      state.doc = doc;
+      state.total = total;
+      renderPage(state, Number(container.dataset.page) || page);
+    } catch (error) {
+      if (state.cancelled) return;
+      state.status.hidden = false;
+      state.status.textContent = error instanceof Error ? error.message : '원본 한글 파일을 미리보기로 열지 못했습니다.';
+      state.image.hidden = true;
+    }
+  })();
+}
+
+function scan(node) {
+  if (node instanceof Element && node.matches('.hwp-preview-placeholder')) mount(node);
+  if (node instanceof Element) node.querySelectorAll('.hwp-preview-placeholder').forEach(mount);
+}
+
+function cleanup(node) {
+  if (!(node instanceof Element)) return;
+  if (node.matches('.hwp-preview-placeholder')) dispose(node);
+  node.querySelectorAll('.hwp-preview-placeholder').forEach(dispose);
+}
+
+function start() {
+  scan(document);
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'attributes') mount(mutation.target);
+      else {
+        mutation.addedNodes.forEach(scan);
+        mutation.removedNodes.forEach(cleanup);
+      }
+    }
+  }).observe(document.body, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['data-source-id', 'data-page'],
+  });
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+else start();
