@@ -65,6 +65,18 @@ globalThis.extractHwpEmbeddedMedia = async (bytes, pages) => {
       const result = { page: index + 1, photos: [] };
       doc.getPageSourceImageKeys(index);
       const signatureText = /서명|날인|제출자/.test(sourcePage.text || '');
+      const overlay = JSON.parse(doc.getPageOverlayImages(index));
+      for (const image of [...(overlay.behind || []), ...(overlay.front || [])]) {
+        const box = image.bbox || {};
+        if (!/^image\/(?:jpeg|png)$/i.test(image.mime || '') || !image.base64 || box.y + box.height < pageHeight * 0.90 || box.width > 180 || box.height > 80) continue;
+        const bytes = Uint8Array.from(atob(image.base64), character => character.charCodeAt(0));
+        const blob = new Blob([bytes], { type: image.mime });
+        let bitmap;
+        try { bitmap = await createImageBitmap(blob); } catch { continue; }
+        const signatureAspect = bitmap.width / Math.max(1, bitmap.height);
+        if (bitmap.width <= 1200 && bitmap.height <= 500 && signatureAspect >= 1.2) result.signature ||= blob;
+        bitmap.close();
+      }
       const pageImages = JSON.parse(doc.getPageFlowImageOps(index)).images || [];
       for (const image of pageImages) {
         if (!/^image\/(?:jpeg|png)$/i.test(image.mime || '')) continue;
