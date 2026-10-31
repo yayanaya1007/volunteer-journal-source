@@ -35,3 +35,15 @@ export async function readPdfPages(pageCount, concurrency, readPage, progress) {
   if (error) throw error.reason;
   return pages;
 }
+
+export function resolvePdfImageObject(page, id, timeoutMs = 8000) {
+  // PDF.js stores g_ objects in commonObjs, shared across pages.
+  const objects = id.startsWith('g_') ? page.commonObjs : page.objs;
+  if (!objects) return Promise.reject(new Error('PDF 그림 저장소를 찾지 못했습니다.'));
+  if (objects.has(id)) return Promise.resolve(objects.get(id));
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('PDF 사진·서명 일부를 추출하지 못했습니다. 원본을 확인해 주세요.')), timeoutMs);
+    try { objects.get(id, data => { clearTimeout(timer); data ? resolve(data) : reject(new Error('PDF 그림이 비어 있습니다.')); }); }
+    catch (error) { clearTimeout(timer); reject(error); }
+  });
+}
