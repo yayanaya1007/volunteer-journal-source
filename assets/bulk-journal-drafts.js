@@ -1,3 +1,4 @@
+import {WholeMinuteTimeInput} from './whole-minute-time-input.js?v=20261031-time00-v1';
 // The picker receives the existing journal's action list; no separate activity catalogue.
 export const COMMON_ACTIVITY_CONTEXT = new Set(['도로변', '마을', '대상자', '취약계층', '어르신', '우리동네', '김치', '불고기', '김장김치', '장조림']);
 
@@ -114,7 +115,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
     setMessage(`${result.created}일의 초안을 넣었습니다.${result.skipped.length ? ` 기존 기록이 있는 ${result.skipped.length}일은 보존했습니다.` : ''} 내용을 확인한 뒤 작업 저장을 눌러 주세요.`);
   } catch (error) { setMessage(error.message); } };
   const restore = () => { const result = onUndo(history); setHistory([]); setMessage(`${result.restored}일의 초안을 되돌렸습니다.${result.kept ? ` 이후 수정한 ${result.kept}일은 보존했습니다.` : ''}`); };
-  const field = (label, type, value, setter) => h('label', { className: 'bulk-field' }, h('span', null, label), h('input', { type, value, onChange: event => resetPlan(() => setter(event.target.value)) }));
+  const field = (label, type, value, setter) => h('label', { className: 'bulk-field' }, h('span', null, label), h(type === 'time' ? WholeMinuteTimeInput : 'input', { ...(type === 'time' ? { React } : {}), type, value, onChange: event => resetPlan(() => setter(event.target.value)) }));
   return h('div', { className: 'bulk-journal-launch' },
     h('button', { type: 'button', className: 'bulk-launch-button', disabled: disabled || !project.month || !project.name?.trim() || !project.camp?.trim(), onClick: openBuilder }, '여러 날짜 일지 만들기'),
     history.length > 0 && h('button', { type: 'button', className: 'bulk-undo-button', onClick: restore }, '방금 만든 초안 되돌리기'),

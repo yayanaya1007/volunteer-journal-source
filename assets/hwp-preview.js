@@ -138,9 +138,15 @@ function updatePager(state, page) {
 }
 
 function renderPage(state, requestedPage) {
-  if (!state.doc || !state.total) return;
+  if (state.cancelled || !state.container.isConnected || state.container.dataset.sourceId !== state.id || !state.container.matches('.hwp-preview-placeholder') || !state.doc || !state.total) return;
   const page = Math.max(1, Math.min(state.total, Number(requestedPage) || 1));
-  if (page === state.page && state.image.src) return;
+  if (page === state.page && state.image.src) {
+    state.image.hidden = false;
+    state.status.hidden = true;
+    updatePageLink(state, state.svgUrl || state.image.src);
+    updatePager(state, page);
+    return;
+  }
   try {
     state.container.scrollTop = 0;
     const svg = state.doc.renderPageSvg(page - 1);
@@ -177,6 +183,11 @@ function mount(container) {
   const page = Number(container.dataset.page) || 1;
   const current = states.get(container);
   if (current?.id === id) {
+    // React can reuse this div for a date without a source, replacing the
+    // renderer-owned image with placeholder text. Reattach the cached nodes.
+    if (current.image.parentNode !== container || current.status.parentNode !== container) {
+      container.replaceChildren(current.status, current.image);
+    }
     renderPage(current, page);
     return;
   }
@@ -223,13 +234,15 @@ function mount(container) {
 
 function scan(node) {
   if (node instanceof Element && node.matches('.hwp-preview-placeholder')) mount(node);
-  if (node instanceof Element) node.querySelectorAll('.hwp-preview-placeholder').forEach(mount);
+  if (node?.querySelectorAll) node.querySelectorAll('.hwp-preview-placeholder').forEach(mount);
 }
 
 function cleanup(node) {
-  if (!(node instanceof Element)) return;
-  if (node.matches('.hwp-preview-placeholder')) dispose(node);
-  node.querySelectorAll('.hwp-preview-placeholder').forEach(dispose);
+  if (!(node instanceof Element) || node.isConnected) return;
+  // The div may no longer carry the placeholder class after React reused it.
+  for (const container of states.keys()) {
+    if (container === node || node.contains(container)) dispose(container);
+  }
 }
 
 function start() {
@@ -238,6 +251,7 @@ function start() {
     for (const mutation of mutations) {
       if (mutation.type === 'attributes') mount(mutation.target);
       else {
+        if (mutation.target instanceof Element && mutation.target.matches('.hwp-preview-placeholder')) mount(mutation.target);
         mutation.addedNodes.forEach(scan);
         mutation.removedNodes.forEach(cleanup);
       }
