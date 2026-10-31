@@ -25,10 +25,11 @@ export function restoreClearedJournalDates(project, history) {
 export function CalendarClearTools({ React, mode, dates, onStart, onCancel, onAll, onConfirm, disabled }) {
   const h = React.createElement;
   return h('div', { className: 'calendar-clear-tools' },
+    h('p', { className: 'calendar-clear-hint' }, mode ? '날짜 칸이나 체크칸을 누르면 선택·해제됩니다.' : '비울 날짜의 체크칸을 선택한 뒤 아래 비우기를 누르세요.'),
     h('button', { type: 'button', disabled, 'aria-pressed': mode, onClick: mode ? onCancel : onStart }, mode ? '선택 취소' : '여러 날짜 선택'),
-    mode && h(React.Fragment, null,
-      h('p', { className: 'calendar-clear-hint' }, '달력에서 비울 날짜를 누르세요. 다시 누르면 선택이 풀립니다.'),
+    h(React.Fragment, null,
       h('button', { type: 'button', disabled, onClick: onAll }, '작성된 날짜 모두 선택'),
+      dates.length > 0 && !mode && h('button', { type: 'button', disabled, onClick: onCancel }, '선택 모두 해제'),
       h('span', { role: 'status' }, `${dates.length}일 선택`),
       h('button', { type: 'button', className: 'calendar-clear-confirm', disabled: disabled || !dates.length, onClick: onConfirm }, `선택한 ${dates.length}일 비우기`)));
 }
