@@ -23,3 +23,5 @@
 /* Keep the journal title together without overflowing a phone screen. */
 .journal-heading{white-space:nowrap}.journal-title-part{display:inline-block;white-space:nowrap}
 @media(max-width:600px){.page-title .journal-heading{white-space:normal}.journal-heading .journal-title-part{display:block}}
+
+.clear-journal-dates{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}.clear-journal-dates label{display:flex;align-items:center;gap:7px;padding:10px;border:1px solid #d5ddec;border-radius:8px;cursor:pointer}.clear-journal-dates input{width:18px;height:18px;accent-color:#2755be}.clear-journal-dates small{font-size:11px;color:#64748b}
