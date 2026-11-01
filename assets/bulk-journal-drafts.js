@@ -200,7 +200,7 @@ export function undoBulkDrafts(project, history) {
 export function BulkJournalDraftButton({ React, project, onApply, onUndo, activityOptions, initialRecord, disabled, town = '', containsTrip }) {
   const h = React.createElement;
   const [open, setOpen] = React.useState(false), [dates, setDates] = React.useState([]), [activities, setActivities] = React.useState([]), [commonActivities, setCommonActivities] = React.useState([]);
-  const [counterpart, setCounterpart] = React.useState(''), [activityGroup, setActivityGroup] = React.useState(''), [actionResult, setActionResult] = React.useState(''), [place, setPlace] = React.useState(''), [start, setStart] = React.useState(''), [end, setEnd] = React.useState('');
+  const [counterpart, setCounterpart] = React.useState(''), [activityGroup, setActivityGroup] = React.useState(''), [actionResult, setActionResult] = React.useState(''), [place, setPlace] = React.useState(''), [start, setStart] = React.useState('09:00'), [end, setEnd] = React.useState('');
   const [plan, setPlan] = React.useState(null), [message, setMessage] = React.useState(''), [history, setHistory] = React.useState([]);
   const [tripDates, setTripDates] = React.useState([]);
   const [datePlacesEnabled, setDatePlacesEnabled] = React.useState(false), [placesByDate, setPlacesByDate] = React.useState({});
