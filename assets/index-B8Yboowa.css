@@ -36,3 +36,5 @@
 .toolbar .name-entry-control+button{align-self:center;margin-top:30px;flex-shrink:0}
 
 @media(min-width:761px){.toolbar>[data-slot="select-trigger"]{align-self:center;margin-top:30px}}
+
+.toolbar>[data-slot="select-trigger"]{box-sizing:border-box;flex:0 0 240px;width:240px;max-width:calc(100% - 120px);height:50px;min-height:50px}
