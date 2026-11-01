@@ -1,12 +1,12 @@
-/* Keep the calendar alongside the journal; upload stays above it. */
+/* Source upload on the left; month, name and saved journals on the right. */
+.journal-setup-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:20px;align-items:start;margin-bottom:20px}
+.journal-identity-pane{min-width:0}
+.journal-identity-pane .saved-journals{width:auto;margin-left:0}
+.source-upload-pane{background:#fff;border:1px solid #dce4ef;border-radius:14px;padding:24px;min-width:0}
 @media (min-width:761px){
- .work-grid{grid-template-areas:"upload detail" "calendar detail";grid-template-rows:auto 1fr;align-items:start}
- .source-upload-pane{grid-area:upload;background:#fff;border:1px solid #dce4ef;border-radius:14px;padding:24px}
- .month-pane{grid-area:calendar;position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin}
- .detail-pane{grid-area:detail}
+ .work-grid{align-items:start}
+ .month-pane{position:sticky;top:16px;align-self:start;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin}
+ .journal-identity-pane .toolbar{flex-wrap:wrap}
 }
-@media (min-width:761px) and (max-width:1000px){.source-upload-pane{padding:18px}}
-@media (max-width:760px){.source-upload-pane{background:#fff;border:1px solid #dce4ef;border-radius:14px;padding:18px}}
-
-@media (min-width:1001px){.saved-journals{width:calc(100% - 380px);margin-left:auto}}
-@media (min-width:761px) and (max-width:1000px){.saved-journals{width:calc(100% - 330px);margin-left:auto}}
+@media (min-width:761px) and (max-width:1000px){.journal-setup-grid{grid-template-columns:310px minmax(0,1fr)}.source-upload-pane{padding:18px}}
+@media (max-width:760px){.journal-setup-grid{grid-template-columns:minmax(0,1fr)}.source-upload-pane{padding:18px}}
