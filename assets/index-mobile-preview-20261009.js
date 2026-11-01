@@ -1,4 +1,5 @@
-import {readPdfJournalLayout} from './pdf-journal-layout.js?v=20261031-pdf-layout-v1';
+import {readJournalTripText,activityContentFromSection} from './journal-trip-import.js?v=20261101-trip-columns-v1';
+import {readPdfJournalLayout} from './pdf-journal-layout.js?v=20261101-trip-columns-v3';
 import {projectForPdfSource} from './pdf-journal-export.js?v=20261031-pdf-export-v1';
 import {pdfTextNeedsOcr,pdfPageConcurrency,readPdfPages,resolvePdfImageObject} from './pdf-text-fast-path.js?v=20261031-pdf-fast-v3';
 import {BulkClearJournalButton,CalendarClearTools,clearJournalDates,restoreClearedJournalDates} from './bulk-clear-journal.js?v=20261031-calendar-open-v4';
@@ -242,7 +243,7 @@ function Vh(e){
  e=e.replace(/氠瑢/g,'');
  const format=(e,t)=>String(e).padStart(2,'0')+':'+t,timeSection=e.match(/(?:^|\n)\s*(?:\d+[.)]\s*)?활동\s*시간(?:\s*및\s*유형)?\s*\n([\s\S]*?)(?=\n\s*총\s*활동\s*시간)/)?.[1]||e,times=[...timeSection.matchAll(new RegExp(Rh.source,'g'))].filter(e=>+e[1]<24&&+e[2]<60&&+e[3]<24&&+e[4]<60),timeRanges=times.map(e=>({start:format(e[1],e[2]),end:format(e[3],e[4])})),first=timeRanges[0],start=first?.start||'',end=first?.end||'';
  const explicitStart=e.match(/시작\s*시간[^\d]*(\d{1,2}:\d{2})/)?.[1]||'',explicitEnd=e.match(/종료\s*시간[^\d]*(\d{1,2}:\d{2})/)?.[1]||'',conflict=!!(first&&((explicitStart&&explicitStart!==start)||(explicitEnd&&explicitEnd!==end))),breakMinutes=Number(e.match(/휴게\s*시간[^\d]*(\d{1,4})\s*분/)?.[1]||0),totalMatch=e.match(/총\s*활동\s*시간[\s\S]{0,35}?(\d{1,3})\s*시간(?:[\s\S]{0,12}?(\d{1,2})\s*분)?/),totalMinutes=totalMatch?Number(totalMatch[1])*60+Number(totalMatch[2]||0):null;
- const s=e.replace(/세\s*부\s*활\s*동\s*내\s*용/g,'세부활동내용').replace(/주\s*요\s*업\s*무/g,'주요업무'),detail=s.match(/(?:세부활동내용|(?:^|\n)[ \t]*활\s*동\s*내\s*용)[ \t]*[:：]?[ \t]*\n([\s\S]*?)(?=(?:\d[.\s]*)?(?:활동실적|출장내역|특이사항|확인사항|활동사진)|$)/)?.[1]||s.match(/세부활동내용\s*[:：]?([\s\S]*?)(?=(?:\d[.\s]*)?(?:활동실적|출장내역|특이사항|확인사항|활동사진)|$)/)?.[1],contents=[],activityContentOnly=value=>{const lines=value.split(/\r?\n/).map(line=>line.trim()),heading=line=>line.replace(/[\s:：]/g,''),columnValue=line=>{const cell=heading(line).replace(/[,，;；]$/,'');if(cell==='홍보'||zh.includes(cell))return true;const ranges=[...line.matchAll(new RegExp(Rh.source,'g'))];if(!ranges.length)return false;const rest=line.replace(new RegExp(Rh.source,'g'),'').replace(/(?<!\d)\d{1,2}\s*(?::|시)\s*\d{2}\s*분?/g,'').replace(/[\s,，~～∼〜–－-]/g,'');return /\d/.test(line)&&!rest},header=lines.findIndex(line=>{if(heading(line)==='시간구분활동내용')return true;const cells=line.split(/\t+|\s{2,}/).map(heading).filter(Boolean);return cells.includes('활동내용')&&cells.includes('시간')&&cells.includes('구분')});if(header>=0){if(!/\t|\s{2,}/.test(lines[header])){const body=lines.slice(header+1).filter(Boolean);return body.slice(2).filter(line=>!columnValue(line)).join('\n').trim()}const cells=lines[header].split(/\t+|\s{2,}/).map(heading),column=cells.indexOf('활동내용');return lines.slice(header+1).map(line=>line.split(/\t+|\s{2,}/).slice(column).join(' ').trim()).filter(Boolean).join('\n').trim()}const normalized=lines.map(heading),contentHeader=normalized.findIndex(line=>line==='활동내용');if(contentHeader>=2&&normalized[contentHeader-1]==='구분'&&normalized[contentHeader-2]==='시간'){const body=lines.slice(contentHeader+1).filter(Boolean);return body.slice(2).filter(line=>!columnValue(line)).join('\n').trim()}return value.trim()};
+ const s=e.replace(/세\s*부\s*활\s*동\s*내\s*용/g,'세부활동내용').replace(/주\s*요\s*업\s*무/g,'주요업무'),detail=s.match(/(?:세부활동내용|(?:^|\n)[ \t]*활\s*동\s*내\s*용)[ \t]*[:：]?[ \t]*\n([\s\S]*?)(?=(?:\d[.\s]*)?(?:활동실적|출장내역|특이사항|확인사항|활동사진)|$)/)?.[1]||s.match(/세부활동내용\s*[:：]?([\s\S]*?)(?=(?:\d[.\s]*)?(?:활동실적|출장내역|특이사항|확인사항|활동사진)|$)/)?.[1],contents=[],activityContentOnly=activityContentFromSection;
  if(detail!==void 0)contents.push(activityContentOnly(detail));else for(const m of s.matchAll(/(?:^|\n)[ \t·•○ㅇ\-]*(?:내용|활동\s*내용)[ \t]*[:：][ \t]*([^\n]*(?:\n(?!\s*(?:[·•○ㅇ\-]*\s*)?(?:시간|장소|단체|내용|실적입력|홍보|수요처|기\s*타|활동사진|주요업무|특이사항))[^\n]*)*)/g))contents.push(m[1]);
  let details=contents.map(value=>value.trim()).filter(Boolean).join('\n\n');
  const category=Bh(s);
@@ -280,15 +281,11 @@ function readDocCounts(text){
  }
  return counts
 }
-function readDocTrips(text){
- const section=text.match(/출장내역([\s\S]*?)(?=특이사항|확인사항|$)/)?.[1]||'',lines=section.split(/\r?\n/).map(line=>line.trim()).filter(Boolean),trips=[],range=/(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*(?:~|～|∼|〜|–|－|-)\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/;
- for(let i=0;i<lines.length;i++){if(!/^\d{1,2}$/.test(lines[i]))continue;const window=lines.slice(i+1,i+6),time=window.find(line=>range.test(line));if(!time)continue;const match=time.match(range),at=window.indexOf(time),values=window.slice(at+1).filter(line=>line&&!/^(?:결과\s*및\s*증빙|출장지|출장목적)/.test(line));if(values.length<2)continue;const format=(hour,minute)=>String(hour).padStart(2,'0')+':'+minute;trips.push({id:'source-trip-'+(trips.length+1),start:format(match[1],match[2]),end:format(match[3],match[4]),place:values[0],purpose:values[1]})}
- return trips
-}
+function readDocTrips(text){return readJournalTripText(text)}
 function ag(e,t,n){
  const date=Lh(e.text,t.month),i=kp(date,e.name||t.name,e.camp||t.camp),fields=e.fields||Vh(e.text);
  i.name=e.name||ig(e.text,['활동가 성명','활동가성명']);i.camp=e.camp||ig(e.text,['거점캠프명','거점 캠프명']);
- i.place=ig(e.text,['활동장소','활동 장소'])||fields.place;i.start=fields.start;i.end=fields.end;i.breakMinutes=fields.breakMinutes||0;
+ i.place=e.fields?fields.place:(ig(e.text,['활동장소','활동 장소'])||fields.place);i.start=fields.start;i.end=fields.end;i.breakMinutes=fields.breakMinutes||0;
  const ranges=fields.timeRanges||[];i.start2=ranges[1]?.start||'';i.end2=ranges[1]?.end||'';i.showSecondTime=ranges.length>1;i.additionalActivityTimes=ranges.slice(2);
  i.counts={...i.counts,...(e.counts||readDocCounts(e.text))};
  for(const label of ['거점상담','홍보·모집','수요처 발굴','연계·배치','실적관리','프로그램 운영','회의·교육','출장','기타']){const escaped=label.replace(/[.*+?^$()|[\]\\]/g,'\\$&');if(new RegExp('(?:☑|☒|✓|✔|√|▣|■|🗹)\\s*'+escaped).test(e.text))i.types.push(label)}

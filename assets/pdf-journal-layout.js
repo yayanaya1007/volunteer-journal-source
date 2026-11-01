@@ -1,3 +1,4 @@
+import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261101-trip-columns-v1';
 const compact = value => value.replace(/\s/g, '');
 const range = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 const center = item => item.x + item.width / 2;
@@ -24,7 +25,9 @@ export function readPdfJournalLayout(rawItems) {
     const anchor=basic.find(item=>compact(item.str)===label);
     if (!anchor) return '';
     const next=basic.filter(item=>labels.includes(compact(item.str)) && item.x>anchor.x && Math.abs(item.y-anchor.y)<4).sort((a,b)=>a.x-b.x)[0];
-    return lines(basic.filter(item=>Math.abs(item.y-anchor.y)<4 && item.x>=anchor.x+anchor.width-1 && item.x<(next?.x??Infinity)-2));
+    const otherRows=basic.filter(item=>labels.includes(compact(item.str))&&Math.abs(item.y-anchor.y)>=4).map(item=>Math.abs(item.y-anchor.y));
+    const halfRow=otherRows.length?Math.min(...otherRows)/2:10;
+    return lines(basic.filter(item=>Math.abs(item.y-anchor.y)<halfRow && item.x>=anchor.x+anchor.width-1 && item.x<(next?.x??Infinity)-2));
   };
   const camp=field('거점캠프명'),name=field('활동가성명'),dateText=field('활동일자'),place=field('활동장소');
   const timeLabel=activity.find(item=>compact(item.str)==='활동시간'),totalLabel=activity.find(item=>compact(item.str)==='총활동시간');
@@ -70,7 +73,14 @@ export function readPdfJournalLayout(rawItems) {
     for(let index=0;index<indices.length;index++){
       const current=indices[index],top=index?(indices[index-1].y+current.y)/2:tripHeaders[0].y-5,bottom=index<indices.length-1?(current.y+indices[index+1].y)/2:headings[5].y+3;
       const row=tripArea.filter(item=>item.y<top&&item.y>bottom),cells=centers.map((x,column)=>lines(row.filter(item=>item.x>=(column?centers[column-1]+(column===1?(x-centers[column-1])/2:(centers[column-1]-centers[column-2])/2):-Infinity)&&item.x<(column<centers.length-1?x+(column?x-centers[column-1]:centers[1]-x)/2:Infinity))));
-      const match=[...cells[1].matchAll(range)][0];if(match)trips.push({id:`source-trip-${trips.length+1}`,start:`${match[1].padStart(2,'0')}:${match[2]}`,end:`${match[3].padStart(2,'0')}:${match[4]}`,place:cells[2],purpose:cells[3]});
+      const times=row.filter(item=>item.x>=centers[0]+(centers[1]-centers[0])/2&&item.x<centers[1]+(centers[1]-centers[0])/2).flatMap(item=>tripTimeRanges(item.str).map(time=>({...time,y:item.y}))).sort((a,b)=>b.y-a.y);
+      if(times.length>1&&new Set(times.map(time=>time.y)).size===times.length){
+        for(let number=0;number<times.length;number++){
+          const time=times[number],above=number?(times[number-1].y+time.y)/2:top,below=number<times.length-1?(time.y+times[number+1].y)/2:bottom;
+          const value=column=>lines(row.filter(item=>item.y<=above&&item.y>below&&item.x>=centers[column-1]+(centers[column-1]-centers[column-2])/2&&item.x<centers[column]+(centers[column]-centers[column-1])/2));
+          trips.push({id:`source-trip-${trips.length+1}`,start:time.start,end:time.end,place:value(2),purpose:value(3)});
+        }
+      }else for(const trip of tripEntriesFromCells(cells[1],cells[2],cells[3]))trips.push({...trip,id:`source-trip-${trips.length+1}`});
     }
   }
   const notes=lines(notesArea.filter(item=>!/^특이사항\s*\/\s*건의사항$/.test(item.str)&&!/^\s*[•·]\s*$/.test(item.str)));
