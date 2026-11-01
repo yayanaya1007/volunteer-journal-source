@@ -34,3 +34,5 @@
 .toolbar .name-entry-control{box-sizing:border-box;flex:0 0 240px;min-width:0;width:240px;max-width:calc(100% - 120px);padding:17px 0 11px;gap:6px}.toolbar .name-entry-control>input{width:100%;min-width:0;min-height:50px;height:50px}.name-entry-control>span{white-space:nowrap;font-size:14px;line-height:1.3}
 
 .toolbar .name-entry-control+button{align-self:center;margin-top:30px;flex-shrink:0}
+
+@media(min-width:761px){.toolbar>[data-slot="select-trigger"]{align-self:center;margin-top:30px}}
