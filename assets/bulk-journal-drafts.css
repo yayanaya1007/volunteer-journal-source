@@ -15,3 +15,5 @@
 .bulk-date-schedules{display:grid;gap:14px;margin:14px 0}.bulk-date-schedule{min-width:0;border:1px solid #d6e2d9;border-radius:10px;background:#f8fbf9;padding:14px}.bulk-date-schedule>strong{display:block;margin-bottom:12px}.bulk-schedule-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:10px 0 14px}.bulk-schedule-reset{border:1px solid #ccd8d2;border-radius:8px;padding:7px 10px;background:#fff;color:#365a4d;font:inherit;font-size:13px;cursor:pointer}.bulk-date-schedule .bulk-trip-toggle{margin-top:12px}.bulk-schedule-fields .bulk-field{min-width:0}
 
 .bulk-day-trip-entry{min-width:0;margin:10px 0;padding:12px;border:1px solid #d6e2d9;border-radius:8px;background:#fff}.bulk-day-trip-entry legend{padding:0 5px;font-weight:600;font-size:14px}.bulk-day-trip-entry .bulk-schedule-fields{margin-bottom:8px}
+
+.bulk-group-summary{padding:12px 14px;margin:14px 0;border:1px solid #cddfd2;border-radius:9px;background:#f0f7f2;font-size:14px;line-height:1.7}.bulk-group-summary p{margin:6px 0;overflow-wrap:anywhere}.bulk-group-summary small{color:#536b60}
