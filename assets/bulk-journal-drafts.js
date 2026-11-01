@@ -6,6 +6,11 @@ export function activityPlaceOptions(camp = '', town = '') {
   return [...(area ? [`${area} 거점캠프`, `${area} 일원`] : []), '자원봉사센터', '시청', '면사무소'];
 }
 
+export function tripPhotoStatus(record, assets = []) {
+  if (!record || !(record.types?.includes('출장') || record.trips?.length)) return '';
+  return assets.some(asset => asset.kind === 'photo' && asset.date === record.date && asset.url) ? 'ready' : 'missing';
+}
+
 export function makeActivitySentence({ place = '', camp = '', counterpart = '', activityGroup = '', actionResult = '', actionSelections = [] }) {
   const location = place.trim() || camp;
   return `${location}에서 ${counterpart.trim() ? `${counterpart.trim()}와 ` : ''}${activityGroup ? `${activityGroup}과 함께 ` : ''}${actionSelections.join('·')} 활동을 진행함${actionResult.trim() ? `. ${actionResult.trim()}` : '.'}`;
@@ -174,7 +179,8 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
           h('div', { className: 'bulk-plan-heading' }, h('strong', null, item.date), h('label', null, h('span', { className: 'bulk-sr-only' }, `${item.date} 활동 선택`), distributedActivities.length ? h('select', { value: item.activityId, onChange: event => { const id = event.target.value; const next = makeDraftPlan([item.date], [id, ...commonActivities], sentenceOptions)[0]; setPlan(old => old.map((row, number) => number === index ? next : row)); } },
             ...distributedActivities.map(label => h('option', { key: label, value: label }, label))) : h('span', null, '공통 항목만 적용'))),
           h('textarea', { 'aria-label': `${item.date} 활동내용 초안`, value: item.text, onChange: event => setPlan(old => old.map((row, number) => number === index ? { ...row, text: event.target.value } : row)) }),
-          h('small', null, [place || '장소 미입력', start && end ? `${start} ~ ${end}` : '시간 미입력', tripEnabled && trip.dates.includes(item.date) ? `출장 ${tripStart} ~ ${tripEnd} · ${tripPlace}` : '출장내역 없음'].join(' · '))))),
+          h('small', null, [place || '장소 미입력', start && end ? `${start} ~ ${end}` : '시간 미입력', tripEnabled && trip.dates.includes(item.date) ? `출장 ${tripStart} ~ ${tripEnd} · ${tripPlace}` : '출장내역 없음'].join(' · ')),
+          (tripEnabled && trip.dates.includes(item.date) || item.types.includes('출장')) && h('p', { className: 'trip-photo-notice ' + tripPhotoStatus({ date: item.date, types: ['출장'] }, project.assets), role: 'status' }, tripPhotoStatus({ date: item.date, types: ['출장'] }, project.assets) === 'ready' ? '출장사진 등록됨' : '출장사진 필요 · 일지를 넣은 뒤 해당 날짜의 출장 사진 탭에 붙여넣어 주세요.')))),
         tripEnabled && h('p', { className: 'bulk-trip-summary' }, `출장 ${trip.dates.length}일 (${trip.dates.map(date => `${Number(date.slice(-2))}일`).join(', ')}): ${tripStart} ~ ${tripEnd} · ${tripPlace} · ${tripPurpose}`),
         h('div', { className: 'bulk-dialog-actions' }, h('button', { type: 'button', onClick: () => setPlan(null) }, '선택 수정'), h('button', { type: 'button', className: 'bulk-primary', onClick: apply }, `${plan.length}일 초안 넣기`))
       ), message && h('p', { role: 'alert', className: 'bulk-error' }, message)));
