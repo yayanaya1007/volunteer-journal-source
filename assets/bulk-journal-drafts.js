@@ -12,9 +12,9 @@ export function tripPhotoStatus(record, assets = []) {
   return assets.some(asset => asset.kind === 'photo' && asset.date === record.date && asset.url) ? 'ready' : 'missing';
 }
 
-export function makeActivitySentence({ place = '', camp = '', counterpart = '', activityGroup = '', actionResult = '', actionSelections = [] }) {
+export function makeActivitySentence({ place = '', camp = '', counterpart = '', activityGroup = '', actionResult = '', actionSelections = [], phraseText = activityPhraseText(actionSelections) }) {
   const location = place.trim() || camp;
-  return `${location}에서 ${counterpart.trim() ? `${counterpart.trim()}와 ` : ''}${activityGroup ? `${activityGroup}과 함께 ` : ''}${activityPhraseText(actionSelections)} 활동을 진행함${actionResult.trim() ? `. ${actionResult.trim()}` : '.'}`;
+  return `${location}에서 ${counterpart.trim() ? `${counterpart.trim()}와 ` : ''}${activityGroup ? `${activityGroup}과 함께 ` : ''}${phraseText} 활동을 진행함${actionResult.trim() ? `. ${actionResult.trim()}` : '.'}`;
 }
 
 function activityMetadata(label) {
@@ -54,8 +54,9 @@ export function makeDraftPlan(dates, selected, options = {}) {
     const metadata = semanticGroups[0]?.category ? { category: semanticGroups[0].category } : activity?.category ? { category: activity.category } : activityMetadata(activity?.tokens[0] || common[0]);
     const types = [...new Set(options.autoGroupActivities ? semanticGroups.flatMap(group => group.types || group.tokens.flatMap(label => activityMetadata(label).types)) : actionSelections.flatMap(label => activityMetadata(label).types))];
     const place = draftPlaceForDate(options, date);
-    return { date, place, activityId: activity?.id || '', label: options.autoGroupActivities ? activityPhraseText(actionSelections) : activity?.label || activityPhraseText(common), ...metadata, types, actionSelections,
-      text: makeActivitySentence({ ...options, place, actionSelections }) };
+    const draftPhrase = activityGroupsForSelection(actionSelections).map(group => group.label === '대상자' ? '대상자 모집' : group.label).join('·');
+    return { date, place, activityId: activity?.id || '', label: options.autoGroupActivities ? draftPhrase : activity?.label === '대상자' ? '대상자 모집' : activity?.label || draftPhrase, ...metadata, types, actionSelections,
+      text: makeActivitySentence({ ...options, place, actionSelections, phraseText: draftPhrase }) };
   });
 }
 
