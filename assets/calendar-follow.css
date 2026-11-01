@@ -10,3 +10,15 @@
 }
 @media (min-width:761px) and (max-width:1000px){.journal-setup-grid{grid-template-columns:310px minmax(0,1fr)}.source-upload-pane{padding:18px}}
 @media (max-width:760px){.journal-setup-grid{grid-template-columns:minmax(0,1fr)}.source-upload-pane{padding:18px}}
+
+/* Match the three desktop settings cards without resizing their input fields. */
+@media (min-width:761px){
+ .journal-identity-pane{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(3,minmax(200px,1fr));gap:16px}
+ .journal-identity-pane>.file-first-upload{grid-row:1}
+ .journal-identity-pane>.toolbar{grid-row:2}
+ .journal-identity-pane>.saved-journals{grid-row:3;align-content:center}
+ .journal-identity-pane>.file-first-upload,.journal-identity-pane>.toolbar,.journal-identity-pane>.saved-journals{margin:0;align-self:stretch;box-sizing:border-box}
+ .journal-identity-pane:has(>.name-prompt){grid-template-rows:minmax(200px,1fr) minmax(200px,1fr) auto minmax(200px,1fr)}
+ .journal-identity-pane>.name-prompt{grid-row:3;margin:0}
+ .journal-identity-pane:has(>.name-prompt)>.saved-journals{grid-row:4}
+}
