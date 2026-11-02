@@ -4,7 +4,7 @@ import {activityGroupsForSelection, activityPhraseText} from './activity-word-gr
 
 export function activityPlaceOptions(camp = '', town = '') {
   const area = town.trim() || camp.replace(/^논산시\s*/, '').replace(/\s*(?:거점캠프|거점)\s*$/, '').trim();
-  return [...(area ? [`${area} 거점캠프`, `${area} 일원`] : []), '자원봉사센터', '시청', '면사무소'];
+  return [...(area ? [`${area} 거점캠프`, `${area} 일원`] : []), '자원봉사센터', '시청', '면사무소', '노인회분회'];
 }
 
 export function tripPhotoStatus(record, assets = []) {
@@ -57,6 +57,11 @@ export function makeDraftPlan(dates, selected, options = {}) {
     return { date, place, activityId: activity?.id || '', label: options.autoGroupActivities ? draftPhrase : activity?.label === '대상자' ? '대상자 모집' : activity?.label || draftPhrase, ...metadata, types, actionSelections,
       text: labels.length ? makeActivitySentence({ ...options, place, actionSelections, phraseText: draftPhrase }) : (options.actionResult || '').trim() };
   });
+}
+
+export function setDraftActivities(item, selected, options = {}) {
+  const next = makeDraftPlan([item.date], selected, { ...options, autoGroupActivities: true, commonActivities: selected })[0];
+  return { ...next, place: item.place, text: item.textEdited ? item.text : next.text, textEdited: Boolean(item.textEdited) };
 }
 
 function validRange(start, end) {
@@ -315,11 +320,12 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
         })),
         h('div', { className: 'bulk-dialog-actions' }, h('button', { type: 'button', className: 'bulk-primary', onClick: makePlan }, '날짜별 초안 미리보기'))
       ) : h(React.Fragment, null,
-        h('h3', null, `${plan.length}일 초안 미리보기`), commonActivities.length > 0 && h('p', { className: 'bulk-help' }, `모든 날짜에 공통으로 넣는 항목: ${commonActivities.join(' · ')}`), h('p', { className: 'bulk-help' }, '날짜별 활동과 문장을 확인하고 필요한 부분을 고친 뒤 적용하세요.'),
+        h('h3', null, `${plan.length}일 초안 미리보기`), commonActivities.length > 0 && h('p', { className: 'bulk-help' }, `모든 날짜에 공통으로 넣는 항목: ${commonActivities.join(' · ')}`), h('p', { className: 'bulk-help' }, '날짜마다 활동을 선택하거나 내용을 직접 입력하세요. 활동 선택은 필수가 아닙니다. 직접 입력한 내용은 활동을 바꿔도 유지됩니다.'),
         h('div', { className: 'bulk-plan-list' }, ...plan.map((item, index) => { const times = activityTimesForDate(scheduleOptions, item.date), dayTrip = tripForDate(scheduleOptions, item.date); return h('article', { key: item.date, className: 'bulk-plan-row' },
-          h('div', { className: 'bulk-plan-heading' }, h('strong', null, item.date), h('label', null, h('span', { className: 'bulk-sr-only' }, `${item.date} 활동 선택`), distributedActivities.length ? h('select', { value: item.activityId, onChange: event => { const id = event.target.value; const chosen = distributedActivities.find(group => group.id === id); const next = makeDraftPlan([item.date], [...(chosen?.tokens || [id]), ...commonActivities], sentenceOptions)[0]; setPlan(old => old.map((row, number) => number === index ? next : row)); } },
-            ...distributedActivities.map(group => h('option', { key: group.id, value: group.id }, group.label))) : h('span', null, commonActivities.length ? '공통 항목만 적용' : '활동 미선택'))),
-          h('textarea', { 'aria-label': `${item.date} 활동내용 초안`, value: item.text, onChange: event => setPlan(old => old.map((row, number) => number === index ? { ...row, text: event.target.value } : row)) }),
+          h('div', { className: 'bulk-plan-heading' }, h('strong', null, item.date)),
+          h('details', { className: 'bulk-day-activity-picker' }, h('summary', null, '활동 선택 (선택사항)'), h('div', { className: 'bulk-activities' }, ...activityOptions.map(label =>
+            h(label === '출장' ? 'div' : 'label', { key: label, className: label === '출장' ? 'bulk-trip-checkbox-label' : undefined }, h('input', { type: 'checkbox', 'aria-label': `${item.date} ${label} 활동 선택`, checked: item.actionSelections.includes(label), onChange: event => { const checked = event.target.checked; setPlan(old => old.map((row, number) => number === index ? setDraftActivities(row, checked ? [...row.actionSelections, label] : row.actionSelections.filter(value => value !== label), sentenceOptions) : row)); } }), label)))),
+          h('textarea', { 'aria-label': `${item.date} 활동내용 초안`, placeholder: '활동을 선택하거나 이 날짜의 내용을 직접 입력하세요. 선택은 필수가 아닙니다.', value: item.text, onChange: event => setPlan(old => old.map((row, number) => number === index ? { ...row, text: event.target.value, textEdited: true } : row)) }),
           h('small', null, [item.place || '장소 미입력', activityRanges(times).filter(range => range.start && range.end).map(range => `${range.start} ~ ${range.end}`).join(' / ') || '시간 미입력', dayTrip.enabled ? tripsForDate(scheduleOptions, item.date).map((entry, number) => `출장 ${number + 1}: ${entry.start} ~ ${entry.end} · ${entry.place}`).join(' / ') : '출장내역 없음'].join(' · ')),
           dayTrip.enabled && h('p', { className: 'trip-photo-notice ' + tripPhotoStatus({ date: item.date, types: ['출장'] }, project.assets), role: 'status' }, tripPhotoStatus({ date: item.date, types: ['출장'] }, project.assets) === 'ready' ? '출장사진 등록됨' : '출장사진 필요 · 일지를 넣은 뒤 해당 날짜의 출장 사진 탭에 붙여넣어 주세요.')); })),
         selectedTripDates.length > 0 && h('p', { className: 'bulk-trip-summary' }, `출장 ${selectedTripDates.length}일 (${selectedTripDates.map(date => `${Number(date.slice(-2))}일`).join(', ')}). 각 날짜의 출장시간과 장소를 확인해 주세요.`),
