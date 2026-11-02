@@ -13,14 +13,14 @@
 
 /* Fit only the right-hand settings to the unchanged upload panel height. */
 @media (min-width:761px){
- .journal-identity-pane{contain:size;min-height:0;align-self:stretch;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(3,minmax(0,1fr));gap:16px}
+ .journal-identity-pane{contain:size;min-height:0;align-self:stretch;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,1fr);gap:16px}
  .journal-identity-pane>.file-first-upload{grid-row:1;padding:16px 20px}
  .journal-identity-pane>.toolbar{grid-row:2;padding:12px 16px;align-content:center}
  .journal-identity-pane>.saved-journals{grid-row:3;position:relative;display:grid;grid-template-columns:minmax(0,1fr);gap:6px;padding:10px 16px;align-content:center}
  .journal-identity-pane>.saved-journals>strong{min-height:34px;display:flex;align-items:center;padding-right:170px}
  .journal-identity-pane .saved-journals [data-journal-delete-manager]{position:absolute;top:10px;right:16px;width:auto!important;padding:6px 10px!important}
  .journal-identity-pane>.file-first-upload,.journal-identity-pane>.toolbar,.journal-identity-pane>.saved-journals{margin:0;min-height:0;align-self:stretch;box-sizing:border-box;overflow:auto}
- .journal-identity-pane:has(>.name-prompt){grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto minmax(0,1fr)}
+ .journal-identity-pane:has(>.name-prompt){grid-template-rows:minmax(0,.8fr) minmax(0,1.2fr) auto minmax(0,1fr)}
  .journal-identity-pane>.name-prompt{grid-row:3;margin:0}
  .journal-identity-pane:has(>.name-prompt)>.saved-journals{grid-row:4}
 }
@@ -29,9 +29,9 @@
 @media (min-width:761px) and (max-width:1200px){
  .journal-setup-grid .journal-identity-pane,.journal-setup-grid .journal-identity-pane:has(>.name-prompt){contain:none;align-self:start;grid-template-rows:none;grid-auto-rows:auto}
  .journal-identity-pane>.file-first-upload,.journal-identity-pane>.toolbar,.journal-identity-pane>.saved-journals{height:auto;overflow:visible}
- .journal-identity-pane>.file-first-upload{flex-direction:column;align-items:stretch}
+ .journal-identity-pane>.file-first-upload{flex-direction:column;align-items:stretch;padding:8px 20px;gap:10px}
  .journal-identity-pane>.file-first-upload button{align-self:flex-start;max-width:100%}
- .journal-identity-pane>.toolbar{align-content:flex-start;align-items:flex-end}
+ .journal-identity-pane>.toolbar{align-content:flex-start;align-items:flex-end;padding:24px 16px}
 }
 @media (min-width:761px) and (max-width:1000px){
  .journal-identity-pane .saved-journal-selectors{flex-direction:column!important}
