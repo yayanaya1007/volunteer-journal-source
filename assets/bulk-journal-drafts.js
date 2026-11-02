@@ -278,7 +278,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
               inherited ? h('p', { className: 'bulk-help' }, `기본 장소: ${place || '미입력'}`) : placePicker(`${label} 방문 장소`, value, changePlace, `${label} `));
           }) : h('p', { className: 'bulk-help' }, '먼저 위에서 활동 날짜를 선택해 주세요.')),
         h('div', { className: 'bulk-common' }, field('함께한 사람', 'text', counterpart, setCounterpart), field('활동 단체', 'text', activityGroup, setActivityGroup), field('결과·추가 내용', 'text', actionResult, setActionResult), field('공통 시작시간', 'time', start, setStart), field('공통 종료시간', 'time', end, setEnd)),
-        h('label', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', checked: showSecondTime, onChange: event => resetPlan(() => { setShowSecondTime(event.target.checked); if (!event.target.checked) { setStart2(''); setEnd2(''); } }) }), '공통 활동시간 두 구간 입력'),
+        h('div', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', 'aria-label': '공통 활동시간 두 구간 입력', checked: showSecondTime, onChange: event => resetPlan(() => { setShowSecondTime(event.target.checked); if (!event.target.checked) { setStart2(''); setEnd2(''); } }) }), '공통 활동시간 두 구간 입력'),
         showSecondTime && h('div', { className: 'bulk-schedule-fields' }, field('공통 추가 시작시간', 'time', start2, setStart2), field('공통 추가 종료시간', 'time', end2, setEnd2)),
         h('div', { className: 'bulk-date-tools' }, h('button', { type: 'button', disabled: !dates.length, onClick: () => resetPlan(() => setTimesByDate({})) }, '선택한 날짜에 공통 활동시간 적용')),
         h('p', { className: 'bulk-help' }, '시간을 비우면 각 날짜에서 입력할 수 있습니다. 인원·실적·사진은 임의로 채우지 않으며, 초안은 확인 완료로 처리하지 않습니다.'),
@@ -302,7 +302,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
           return h('section', { key: date, className: 'bulk-date-schedule', 'aria-label': `${label} 시간 및 출장 설정` },
             h('strong', null, label),
             h('div', { className: 'bulk-schedule-fields' }, field(`${label} 활동 시작시간`, 'time', times.start, value => changeTime('start', value)), field(`${label} 활동 종료시간`, 'time', times.end, value => changeTime('end', value))),
-            h('label', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', 'aria-label': `${label} 활동시간 두 구간`, checked: times.showSecondTime, onChange: event => resetPlan(() => setTimesByDate(old => ({ ...old, [date]: { ...times, showSecondTime: event.target.checked, ...(!event.target.checked ? { start2: '', end2: '' } : {}) } }))) }), '활동시간 두 구간'),
+            h('div', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', 'aria-label': `${label} 활동시간 두 구간`, checked: times.showSecondTime, onChange: event => resetPlan(() => setTimesByDate(old => ({ ...old, [date]: { ...times, showSecondTime: event.target.checked, ...(!event.target.checked ? { start2: '', end2: '' } : {}) } }))) }), '활동시간 두 구간'),
             times.showSecondTime && h('div', { className: 'bulk-schedule-fields' }, field(`${label} 추가 활동 시작시간`, 'time', times.start2, value => changeTime('start2', value)), field(`${label} 추가 활동 종료시간`, 'time', times.end2, value => changeTime('end2', value))),
             h('div', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', 'aria-label': `${label} 출장 여부`, checked: dayTrip.enabled, onChange: event => resetPlan(() => changeTrip('enabled', event.target.checked)) }), '이 날짜 출장'),
             dayTrip.enabled && h('div', { className: 'bulk-day-trip-list' }, ...dayTrips.map((entry, index) => {
