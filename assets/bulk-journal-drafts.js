@@ -46,17 +46,16 @@ export function makeDraftPlan(dates, selected, options = {}) {
   const common = labels.filter(label => options.commonActivities?.includes(label));
   const actions = labels.filter(label => !common.includes(label));
   const groups = options.autoGroupActivities ? activityGroupsForSelection(actions) : actions.map(label => ({ id: label, label, tokens: [label] }));
-  if (!labels.length) throw new Error('기존 활동 목록에서 실제로 진행한 활동을 하나 이상 선택해 주세요.');
   return [...new Set(dates)].sort().map((date, index) => {
     const activity = groups.length ? groups[index % groups.length] : null;
     const actionSelections = [...(activity?.tokens || []), ...common];
     const semanticGroups = options.autoGroupActivities ? activityGroupsForSelection(actionSelections) : [];
-    const metadata = semanticGroups[0]?.category ? { category: semanticGroups[0].category } : activity?.category ? { category: activity.category } : activityMetadata(activity?.tokens[0] || common[0]);
+    const metadata = semanticGroups[0]?.category ? { category: semanticGroups[0].category } : activity?.category ? { category: activity.category } : labels.length ? activityMetadata(activity?.tokens[0] || common[0]) : { category: '' };
     const types = [...new Set(options.autoGroupActivities ? semanticGroups.flatMap(group => group.types || group.tokens.flatMap(label => activityMetadata(label).types)) : actionSelections.flatMap(label => activityMetadata(label).types))];
     const place = draftPlaceForDate(options, date);
     const draftPhrase = activityGroupsForSelection(actionSelections).map(group => group.label === '대상자' ? '대상자 모집' : group.label).join('·');
     return { date, place, activityId: activity?.id || '', label: options.autoGroupActivities ? draftPhrase : activity?.label === '대상자' ? '대상자 모집' : activity?.label || draftPhrase, ...metadata, types, actionSelections,
-      text: makeActivitySentence({ ...options, place, actionSelections, phraseText: draftPhrase }) };
+      text: labels.length ? makeActivitySentence({ ...options, place, actionSelections, phraseText: draftPhrase }) : (options.actionResult || '').trim() };
   });
 }
 
@@ -170,7 +169,7 @@ export function buildBulkDrafts(project, plan, options, createRecord, calculateM
     seen.add(item.date);
     const index = records.findIndex(record => record.date === item.date), before = index < 0 ? null : records[index];
     if (hasExistingWork(before)) { skipped.push(item.date); continue; }
-    if (!item.text.trim()) throw new Error(`${item.date} 활동내용을 입력해 주세요.`);
+    if (item.actionSelections.length && !item.text.trim()) throw new Error(`${item.date} 활동내용을 입력해 주세요.`);
     const times = activityTimesForDate(options, item.date), trip = tripForDate(options, item.date);
     const record = { ...createRecord(item.date, project.name, project.camp), ...times, place: item.place ?? draftPlaceForDate(options, item.date),
       types: item.types.filter(type => type !== '출장'), detailCategory: item.category, details: item.text.trim(), typeOther: item.types.includes('기타') ? item.label : '', actionSelections: [...item.actionSelections], counterpart: options.counterpart || '', activityGroup: options.activityGroup || '', actionResult: options.actionResult || '',
@@ -209,7 +208,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
   const [start2, setStart2] = React.useState(''), [end2, setEnd2] = React.useState(''), [showSecondTime, setShowSecondTime] = React.useState(false);
   const [timesByDate, setTimesByDate] = React.useState({}), [tripsByDate, setTripsByDate] = React.useState({});
   const dialog = React.useRef(null), builderStarted = React.useRef(false);
-  const openBuilder = () => { setMessage(''); setPlan(null); if (!builderStarted.current) { setTripEnabled(false); setTripDates([]); setTimesByDate({}); setTripsByDate({}); setDatePlacesEnabled(false); setPlacesByDate({}); setActivities(initialRecord?.actionSelections || []); setCommonActivities([]); setPlace(initialRecord?.place || ''); setCounterpart(initialRecord?.counterpart || ''); setActivityGroup(initialRecord?.activityGroup || ''); setActionResult(initialRecord?.actionResult || ''); builderStarted.current = true; } setOpen(true); };
+  const openBuilder = () => { setMessage(''); setPlan(null); if (!builderStarted.current) { setTripEnabled(false); setTripDates([]); setTimesByDate({}); setTripsByDate({}); setDatePlacesEnabled(false); setPlacesByDate({}); setActivities([]); setCommonActivities([]); setPlace(initialRecord?.place || ''); setCounterpart(initialRecord?.counterpart || ''); setActivityGroup(initialRecord?.activityGroup || ''); setActionResult(initialRecord?.actionResult || ''); builderStarted.current = true; } setOpen(true); };
   React.useEffect(() => { const handler = () => openBuilder(); window.addEventListener('volunteer-journal:bulk-open', handler); return () => window.removeEventListener('volunteer-journal:bulk-open', handler); }, [initialRecord, project.month, project.name, project.camp]);
   const allDates = monthDates(project.month), identity = `${project.month}|${project.name}|${project.camp}`;
   React.useEffect(() => { setDates([]); setPlan(null); setHistory([]); setMessage(''); setDatePlacesEnabled(false); setPlacesByDate({}); setTimesByDate({}); setTripsByDate({}); builderStarted.current = false; }, [identity]);
@@ -256,8 +255,8 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
           ...['일', '월', '화', '수', '목', '금', '토'].map(day => h('span', { key: `weekday-${day}`, className: 'bulk-weekday' }, day)),
           ...Array.from({ length: new Date(`${project.month}-01T12:00:00Z`).getUTCDay() }, (_, index) => h('span', { key: `empty-${index}` })),
           ...allDates.map(date => h('button', { type: 'button', key: date, disabled: occupied(date), 'aria-label': `${Number(date.slice(-2))}일${occupied(date) ? ' 기존 기록 보존' : ''}`, 'aria-pressed': dates.includes(date), onClick: () => toggle(date) }, Number(date.slice(-2)), occupied(date) && h('small', null, '작성됨')))),
-        h('h3', null, '2. 기존 목록에서 활동 선택'),
-        h('p', { className: 'bulk-help' }, '이어지는 단어는 하나의 활동으로 묶고, 묶인 활동을 날짜별로 골고루 넣습니다. 모든 날짜에 넣을 단어만 옆의 ‘공통’을 체크하세요.'),
+        h('h3', null, '2. 기존 목록에서 활동 선택 (선택사항)'),
+        h('p', { className: 'bulk-help' }, '목록을 선택하지 않아도 일지를 만들 수 있습니다. 이어지는 단어는 하나의 활동으로 묶고, 묶인 활동을 날짜별로 골고루 넣습니다. 모든 날짜에 넣을 단어만 옆의 ‘공통’을 체크하세요.'),
         h('div', { className: 'bulk-activities' }, ...activityOptions.map(label => h('div', { key: label, className: 'bulk-activity-choice' },
           h(label === '출장' ? 'div' : 'label', { className: label === '출장' ? 'bulk-trip-checkbox-label' : undefined }, h('input', { type: 'checkbox', 'aria-label': `${label} 활동 선택`, checked: activities.includes(label), onChange: event => { const checked = event.target.checked; resetPlan(() => { setActivities(old => checked ? [...old, label] : old.filter(item => item !== label)); if (!checked) setCommonActivities(old => old.filter(item => item !== label)); }); } }), label),
           h(label === '출장' ? 'div' : 'label', { className: 'bulk-activity-common' + (label === '출장' ? ' bulk-trip-checkbox-label' : '') }, h('input', { type: 'checkbox', 'aria-label': `${label} 공통으로 넣기`, checked: commonActivities.includes(label), onChange: event => { const checked = event.target.checked; resetPlan(() => { setCommonActivities(old => checked ? [...old, label] : old.filter(item => item !== label)); if (checked) setActivities(old => old.includes(label) ? old : [...old, label]); }); } }), '공통')))),
@@ -319,7 +318,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
         h('h3', null, `${plan.length}일 초안 미리보기`), commonActivities.length > 0 && h('p', { className: 'bulk-help' }, `모든 날짜에 공통으로 넣는 항목: ${commonActivities.join(' · ')}`), h('p', { className: 'bulk-help' }, '날짜별 활동과 문장을 확인하고 필요한 부분을 고친 뒤 적용하세요.'),
         h('div', { className: 'bulk-plan-list' }, ...plan.map((item, index) => { const times = activityTimesForDate(scheduleOptions, item.date), dayTrip = tripForDate(scheduleOptions, item.date); return h('article', { key: item.date, className: 'bulk-plan-row' },
           h('div', { className: 'bulk-plan-heading' }, h('strong', null, item.date), h('label', null, h('span', { className: 'bulk-sr-only' }, `${item.date} 활동 선택`), distributedActivities.length ? h('select', { value: item.activityId, onChange: event => { const id = event.target.value; const chosen = distributedActivities.find(group => group.id === id); const next = makeDraftPlan([item.date], [...(chosen?.tokens || [id]), ...commonActivities], sentenceOptions)[0]; setPlan(old => old.map((row, number) => number === index ? next : row)); } },
-            ...distributedActivities.map(group => h('option', { key: group.id, value: group.id }, group.label))) : h('span', null, '공통 항목만 적용'))),
+            ...distributedActivities.map(group => h('option', { key: group.id, value: group.id }, group.label))) : h('span', null, commonActivities.length ? '공통 항목만 적용' : '활동 미선택'))),
           h('textarea', { 'aria-label': `${item.date} 활동내용 초안`, value: item.text, onChange: event => setPlan(old => old.map((row, number) => number === index ? { ...row, text: event.target.value } : row)) }),
           h('small', null, [item.place || '장소 미입력', activityRanges(times).filter(range => range.start && range.end).map(range => `${range.start} ~ ${range.end}`).join(' / ') || '시간 미입력', dayTrip.enabled ? tripsForDate(scheduleOptions, item.date).map((entry, number) => `출장 ${number + 1}: ${entry.start} ~ ${entry.end} · ${entry.place}`).join(' / ') : '출장내역 없음'].join(' · ')),
           dayTrip.enabled && h('p', { className: 'trip-photo-notice ' + tripPhotoStatus({ date: item.date, types: ['출장'] }, project.assets), role: 'status' }, tripPhotoStatus({ date: item.date, types: ['출장'] }, project.assets) === 'ready' ? '출장사진 등록됨' : '출장사진 필요 · 일지를 넣은 뒤 해당 날짜의 출장 사진 탭에 붙여넣어 주세요.')); })),
