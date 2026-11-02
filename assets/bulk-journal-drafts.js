@@ -4,7 +4,13 @@ import {activityGroupsForSelection, activityPhraseText} from './activity-word-gr
 
 export function activityPlaceOptions(camp = '', town = '') {
   const area = town.trim() || camp.replace(/^논산시\s*/, '').replace(/\s*(?:거점캠프|거점)\s*$/, '').trim();
-  return [...(area ? [`${area} 거점캠프`, `${area} 일원`] : []), '자원봉사센터', '시청', '면사무소', '노인회분회'];
+  return [...(area ? [`${area} 거점캠프`, `${area} 일원`] : []), '자원봉사센터', '시청', '면사무소', '노인회분회', '마을회관'];
+}
+
+export function setVillageHallName(value, name) {
+  const selected = value.split(',').map(item => item.trim()).filter(Boolean);
+  const hallName = `${name.trim()}${name.trim() ? ' ' : ''}마을회관`;
+  return selected.map(item => /마을회관$/.test(item) ? hallName : item).join(', ');
 }
 
 export function tripPhotoStatus(record, assets = []) {
@@ -240,10 +246,13 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
   const field = (label, type, value, setter) => h('label', { className: 'bulk-field' }, h('span', null, label), h(type === 'time' ? WholeMinuteTimeInput : type === 'textarea' ? 'textarea' : 'input', { ...(type === 'time' ? { React } : {}), ...(type === 'textarea' ? { rows: 3 } : { type }), value, onChange: event => resetPlan(() => setter(event.target.value)) }));
   const placePicker = (legend, value, setter, prefix) => {
     const selected = value.split(',').map(item => item.trim()).filter(Boolean);
-    const custom = value.split(',').filter(item => !placeOptions.includes(item.trim())).join(',').replace(/^\s+/, '');
+    const isHall = item => /마을회관$/.test(item.trim());
+    const hall = selected.find(isHall);
+    const custom = value.split(',').filter(item => !placeOptions.includes(item.trim()) && !isHall(item)).join(',').replace(/^\s+/, '');
     return h('fieldset', { className: 'bulk-place-picker' }, h('legend', null, legend),
-      h('div', { className: 'bulk-place-options' }, ...placeOptions.map(label => h('label', { key: label }, h('input', { type: 'checkbox', 'aria-label': `${prefix}${label} 활동장소`, checked: selected.includes(label), onChange: event => { const checked = event.target.checked; resetPlan(() => setter(checked ? [...new Set([...selected, label])].join(', ') : selected.filter(item => item !== label).join(', '))); } }), label))),
-      field(`${prefix}다른 장소 직접 입력`, 'text', custom, next => setter([...selected.filter(label => placeOptions.includes(label)), next].filter(Boolean).join(', '))),
+      h('div', { className: 'bulk-place-options' }, ...placeOptions.map(label => h('label', { key: label }, h('input', { type: 'checkbox', 'aria-label': `${prefix}${label} 활동장소`, checked: label === '마을회관' ? Boolean(hall) : selected.includes(label), onChange: event => { const checked = event.target.checked; resetPlan(() => setter(checked ? [...new Set([...selected, label])].join(', ') : selected.filter(item => label === '마을회관' ? !isHall(item) : item !== label).join(', '))); } }), label))),
+      hall && h('label', { className: 'bulk-field' }, h('span', null, `${prefix}마을회관 이름`), h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, h('input', { type: 'text', 'aria-label': `${prefix}마을회관 앞에 들어갈 마을 이름`, placeholder: '예: 신교리', value: hall.replace(/\s*마을회관$/, ''), onChange: event => resetPlan(() => setter(setVillageHallName(value, event.target.value))) }), h('span', { style: { whiteSpace: 'nowrap' } }, '마을회관'))),
+      field(`${prefix}다른 장소 직접 입력`, 'text', custom, next => setter([...selected.filter(label => placeOptions.includes(label) || isHall(label)), next].filter(Boolean).join(', '))),
       !prefix && h('p', { className: 'bulk-help' }, '거점을 바꾸면 해당 지역의 장소 선택칸이 나타납니다. 선택한 장소를 활동장소와 문장에 함께 넣습니다.'));
   };
   return h('div', { className: 'bulk-journal-launch' },
