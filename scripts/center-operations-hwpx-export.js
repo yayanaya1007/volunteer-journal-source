@@ -75,8 +75,20 @@ function rowTexts(row) {
   return cells(row).map((cell) => Array.from(cell.getElementsByTagNameNS(HP, 't')).map((node) => node.textContent || '').join(''));
 }
 function setCellText(cell, value) {
-  const nodes = Array.from(cell.getElementsByTagNameNS(HP, 't'));
-  if (!nodes.length) throw new Error('원본 서식의 표 셀을 찾지 못했습니다.');
+  for (const paragraph of Array.from(cell.getElementsByTagNameNS(HP, 'p'))) {
+    for (const child of Array.from(paragraph.children)) {
+      if (child.namespaceURI === HP && child.localName === 'linesegarray') paragraph.removeChild(child);
+    }
+  }
+  let nodes = Array.from(cell.getElementsByTagNameNS(HP, 't'));
+  if (!nodes.length) {
+    if (String(value ?? '') === '') return;
+    const run = cell.getElementsByTagNameNS(HP, 'run').item(0);
+    if (!run) throw new Error('원본 서식의 표 셀을 찾지 못했습니다.');
+    const node = cell.ownerDocument.createElementNS(HP, 'hp:t');
+    run.appendChild(node);
+    nodes = [node];
+  }
   nodes[0].textContent = String(value ?? '').replace(/\r?\n/g, ' ');
   for (const node of nodes.slice(1)) node.textContent = '';
 }
@@ -85,10 +97,6 @@ function setRowAddress(row, rowIndex) {
     const address = cell.getElementsByTagNameNS(HP, 'cellAddr').item(0);
     if (address) address.setAttribute('rowAddr', String(rowIndex));
   }
-}
-function setSpan(cell, attribute, value) {
-  const span = cell.getElementsByTagNameNS(HP, 'cellSpan').item(0);
-  if (span) span.setAttribute(attribute, String(value));
 }
 function replaceRows(table, nextRows) {
   for (const row of rows(table)) table.removeChild(row);
@@ -177,37 +185,29 @@ function updatePrograms(table, data) {
   replaceRows(table, nextRows);
 }
 
-function makeLinkageTable(baseTable, totalPrototype, town, items, appendTotal, data) {
+function makeLinkageTable(baseTable, totalPrototype, groups, appendTotal, data) {
   const sourceRows = rows(baseTable);
   if (sourceRows.length < 4) throw new Error('원본 서식의 읍면동별 연계 표를 찾지 못했습니다.');
   const headerRows = [sourceRows[0].cloneNode(true), sourceRows[1].cloneNode(true)];
   const nextRows = [...headerRows];
-  items.forEach((item, index) => {
-    const row = (index === 0 ? sourceRows[2] : sourceRows[3]).cloneNode(true);
-    const values = index === 0
-      ? [town, text(item.recipientCategory), text(item.recipient), text(item.recipientAddress), supplierNames(item), text(item.providerAddress), linkageDate(item.date), linkagePeopleCell(item), text(item.activity), text(item.registered)]
-      : [text(item.recipientCategory), text(item.recipient), text(item.recipientAddress), supplierNames(item), text(item.providerAddress), linkageDate(item.date), linkagePeopleCell(item), text(item.activity), text(item.registered)];
-    setTableCellValues(row, values);
-    setRowAddress(row, index + 2);
-    if (index === 0) setSpan(cells(row)[0], 'rowSpan', items.length);
-    nextRows.push(row);
-  });
+  for (const [town, items] of groups) {
+    items.forEach((item) => {
+      const row = sourceRows[2].cloneNode(true);
+      const values = [town, text(item.recipientCategory), text(item.recipient), text(item.recipientAddress), supplierNames(item), text(item.providerAddress), linkageDate(item.date), linkagePeopleCell(item), text(item.activity), text(item.registered)];
+      setTableCellValues(row, values);
+      const townCellSize = cells(row)[0].getElementsByTagNameNS(HP, 'cellSz').item(0);
+      const detailCellSize = cells(sourceRows[3])[0].getElementsByTagNameNS(HP, 'cellSz').item(0);
+      if (townCellSize && detailCellSize) townCellSize.setAttribute('height', detailCellSize.getAttribute('height'));
+      setRowAddress(row, nextRows.length);
+      nextRows.push(row);
+    });
+  }
   if (appendTotal) {
     const total = totalPrototype.cloneNode(true);
     const totalCells = cells(total);
     if (totalCells.length !== 3) throw new Error('원본 서식의 연계 합계 줄을 찾지 못했습니다.');
     setTableCellValues(total, ['합계', `${data.links.length}건 / ${data.linkagePeople.toLocaleString('ko-KR')}명`, '']);
-    setSpan(totalCells[0], 'colSpan', 8);
-    setSpan(totalCells[1], 'colSpan', 2);
-    setSpan(totalCells[2], 'colSpan', 1);
-    const addresses = [0, 8, 10];
-    totalCells.forEach((cell, index) => {
-      const address = cell.getElementsByTagNameNS(HP, 'cellAddr').item(0);
-      if (address) {
-        address.setAttribute('colAddr', String(addresses[index]));
-        address.setAttribute('rowAddr', String(nextRows.length));
-      }
-    });
+    setRowAddress(total, nextRows.length);
     nextRows.push(total);
   }
   replaceRows(baseTable, nextRows);
@@ -216,6 +216,12 @@ function makeLinkageTable(baseTable, totalPrototype, town, items, appendTotal, d
 
 function updateLinkages(root, tables, data) {
   if (tables.length < 4) throw new Error('원본 서식의 읍면동별 연계실적 표를 찾지 못했습니다.');
+  const linkHeading = Array.from(root.children).find((paragraph) =>
+    paragraph.namespaceURI === HP && paragraph.localName === 'p' &&
+    Array.from(paragraph.getElementsByTagNameNS(HP, 't')).map((node) => node.textContent || '').join('').includes('수요공급 연계실적'),
+  );
+  if (!linkHeading) throw new Error('원본 서식의 연계실적 제목을 찾지 못했습니다.');
+  linkHeading.setAttribute('pageBreak', '0');
   const linkParagraphs = Array.from(root.children).filter((paragraph) => {
     if (paragraph.namespaceURI !== HP || paragraph.localName !== 'p') return false;
     const table = paragraph.getElementsByTagNameNS(HP, 'tbl').item(0);
@@ -226,15 +232,19 @@ function updateLinkages(root, tables, data) {
   const totalTable = linkParagraphs[linkParagraphs.length - 1].getElementsByTagNameNS(HP, 'tbl').item(0);
   const totalPrototype = rows(totalTable).at(-1).cloneNode(true);
   const insertionPoint = linkParagraphs[linkParagraphs.length - 1].nextSibling;
+  let nextTableId = Math.max(...tables.map((table) => integer(table.getAttribute('id')))) + 1;
   for (const paragraph of linkParagraphs) root.removeChild(paragraph);
 
-  const groups = data.groups.length ? data.groups : [['', []]];
-  groups.forEach(([town, items], index) => {
-    const paragraph = linkParagraphs[0].cloneNode(true);
-    const table = paragraph.getElementsByTagNameNS(HP, 'tbl').item(0);
-    makeLinkageTable(table, totalPrototype, town, items, index === groups.length - 1 && data.links.length > 0, data);
-    root.insertBefore(paragraph, insertionPoint);
-  });
+  const paragraph = linkParagraphs[0].cloneNode(true);
+  const table = paragraph.getElementsByTagNameNS(HP, 'tbl').item(0);
+  table.setAttribute('id', String(nextTableId++));
+  makeLinkageTable(table, totalPrototype, data.groups, data.links.length > 0, data);
+  root.insertBefore(paragraph, insertionPoint);
+
+  const keptParagraphs = new Set([linkHeading, paragraph]);
+  for (const child of Array.from(root.children)) {
+    if (child.namespaceURI === HP && child.localName === 'p' && !keptParagraphs.has(child)) root.removeChild(child);
+  }
 }
 
 async function exportReport() {
@@ -257,14 +267,14 @@ async function exportReport() {
   updatePrograms(tables[1], data);
   updateLinkages(root, tables, data);
   files['Contents/section0.xml'] = strToU8(new XMLSerializer().serializeToString(xml));
-  files['Preview/PrvText.txt'] = strToU8(`${month} 논산시 거점캠프 운영 현황`);
+  files['Preview/PrvText.txt'] = strToU8(`${month} 논산시 읍면동별 수요공급 연계실적`);
   const entries = Object.fromEntries(Object.entries(files).map(([name, bytes]) => [name, [bytes, { level: name === 'mimetype' ? 0 : 6 }]]));
   const archive = zipSync(entries);
   const blob = new Blob([archive], { type: 'application/haansofthwpx' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `${month}_논산시_거점캠프_운영현황.hwpx`;
+  anchor.download = `${month}_논산시_수요공급연계실적.hwpx`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
@@ -276,5 +286,8 @@ document.addEventListener('click', (event) => {
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-  exportReport().catch((error) => window.alert(error instanceof Error ? error.message : '한글 운영현황을 만들지 못했습니다.'));
+  exportReport().catch((error) => {
+    console.error('한글 운영현황 내보내기 오류:', error);
+    window.alert(error instanceof Error ? error.message : '한글 운영현황을 만들지 못했습니다.');
+  });
 }, true);

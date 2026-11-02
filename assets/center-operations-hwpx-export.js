@@ -1,1 +1,1236 @@
-var z=Uint8Array,j=Uint16Array,It=Int32Array,xt=new z([0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0,0,0,0]),zt=new z([0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13,0,0]),Tt=new z([16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15]),qt=function(t,r){for(var e=new j(31),n=0;n<31;++n)e[n]=r+=1<<t[n-1];for(var o=new It(e[30]),n=1;n<30;++n)for(var a=e[n];a<e[n+1];++a)o[a]=a-e[n]<<5|n;return{b:e,r:o}},jt=qt(xt,2),Ht=jt.b,Mt=jt.r;Ht[28]=258,Mt[258]=28;var Kt=qt(zt,0),or=Kt.b,Gt=Kt.r,Ut=new j(32768);for(x=0;x<32768;++x)Q=(x&43690)>>1|(x&21845)<<1,Q=(Q&52428)>>2|(Q&13107)<<2,Q=(Q&61680)>>4|(Q&3855)<<4,Ut[x]=((Q&65280)>>8|(Q&255)<<8)>>1;var Q,x,X=(function(t,r,e){for(var n=t.length,o=0,a=new j(r);o<n;++o)t[o]&&++a[t[o]-1];var l=new j(r);for(o=1;o<r;++o)l[o]=l[o-1]+a[o-1]<<1;var u;if(e){u=new j(1<<r);var h=15-r;for(o=0;o<n;++o)if(t[o])for(var i=o<<4|t[o],s=r-t[o],f=l[t[o]-1]++<<s,c=f|(1<<s)-1;f<=c;++f)u[Ut[f]>>h]=i}else for(u=new j(n),o=0;o<n;++o)t[o]&&(u[o]=Ut[l[t[o]-1]++]>>15-t[o]);return u}),rt=new z(288);for(x=0;x<144;++x)rt[x]=8;var x;for(x=144;x<256;++x)rt[x]=9;var x;for(x=256;x<280;++x)rt[x]=7;var x;for(x=280;x<288;++x)rt[x]=8;var x,vt=new z(32);for(x=0;x<32;++x)vt[x]=5;var x,ar=X(rt,9,0),sr=X(rt,9,1),fr=X(vt,5,0),lr=X(vt,5,1),At=function(t){for(var r=t[0],e=1;e<t.length;++e)t[e]>r&&(r=t[e]);return r},K=function(t,r,e){var n=r/8|0;return(t[n]|t[n+1]<<8)>>(r&7)&e},Ct=function(t,r){var e=r/8|0;return(t[e]|t[e+1]<<8|t[e+2]<<16)>>(r&7)},Rt=function(t){return(t+7)/8|0},gt=function(t,r,e){return(r==null||r<0)&&(r=0),(e==null||e>t.length)&&(e=t.length),new z(t.subarray(r,e))};var ur=["unexpected EOF","invalid block type","invalid length/literal","invalid distance","stream finished","no stream handler",,"no callback","invalid UTF-8 data","extra field too long","date not in range 1980-2099","filename too long","stream finishing","invalid zip data"],P=function(t,r,e){var n=new Error(r||ur[t]);if(n.code=t,Error.captureStackTrace&&Error.captureStackTrace(n,P),!e)throw n;return n},hr=function(t,r,e,n){var o=t.length,a=n?n.length:0;if(!o||r.f&&!r.l)return e||new z(0);var l=!e,u=l||r.i!=2,h=r.i;l&&(e=new z(o*3));var i=function(lt){var ut=e.length;if(lt>ut){var st=new z(Math.max(ut*2,lt));st.set(e),e=st}},s=r.f||0,f=r.p||0,c=r.b||0,p=r.l,y=r.d,w=r.m,d=r.n,T=o*8;do{if(!p){s=K(t,f,1);var F=K(t,f+1,3);if(f+=3,F)if(F==1)p=sr,y=lr,w=9,d=5;else if(F==2){var $=K(t,f,31)+257,N=K(t,f+10,15)+4,m=$+K(t,f+5,31)+1;f+=14;for(var g=new z(m),D=new z(19),M=0;M<N;++M)D[Tt[M]]=K(t,f+M*3,7);f+=N*3;for(var k=At(D),tt=(1<<k)-1,O=X(D,k,1),M=0;M<m;){var L=O[K(t,f,tt)];f+=L&15;var C=L>>4;if(C<16)g[M++]=C;else{var B=0,S=0;for(C==16?(S=3+K(t,f,3),f+=2,B=g[M-1]):C==17?(S=3+K(t,f,7),f+=3):C==18&&(S=11+K(t,f,127),f+=7);S--;)g[M++]=B}}var b=g.subarray(0,$),I=g.subarray($);w=At(b),d=At(I),p=X(b,w,1),y=X(I,d,1)}else P(1);else{var C=Rt(f)+4,E=t[C-4]|t[C-3]<<8,U=C+E;if(U>o){h&&P(0);break}u&&i(c+E),e.set(t.subarray(C,U),c),r.b=c+=E,r.p=f=U*8,r.f=s;continue}if(f>T){h&&P(0);break}}u&&i(c+131072);for(var ft=(1<<w)-1,H=(1<<d)-1,Y=f;;Y=f){var B=p[Ct(t,f)&ft],Z=B>>4;if(f+=B&15,f>T){h&&P(0);break}if(B||P(2),Z<256)e[c++]=Z;else if(Z==256){Y=f,p=null;break}else{var q=Z-254;if(Z>264){var M=Z-257,A=xt[M];q=K(t,f,(1<<A)-1)+Ht[M],f+=A}var W=y[Ct(t,f)&H],ot=W>>4;W||P(3),f+=W&15;var I=or[ot];if(ot>3){var A=zt[ot];I+=Ct(t,f)&(1<<A)-1,f+=A}if(f>T){h&&P(0);break}u&&i(c+131072);var at=c+q;if(c<I){var mt=a-I,wt=Math.min(I,at);for(mt+c<0&&P(3);c<wt;++c)e[c]=n[mt+c]}for(;c<at;++c)e[c]=e[c-I]}}r.l=p,r.p=Y,r.b=c,r.f=s,p&&(s=1,r.m=w,r.d=y,r.n=d)}while(!s);return c!=e.length&&l?gt(e,0,c):e.subarray(0,c)},_=function(t,r,e){e<<=r&7;var n=r/8|0;t[n]|=e,t[n+1]|=e>>8},ht=function(t,r,e){e<<=r&7;var n=r/8|0;t[n]|=e,t[n+1]|=e>>8,t[n+2]|=e>>16},Et=function(t,r){for(var e=[],n=0;n<t.length;++n)t[n]&&e.push({s:n,f:t[n]});var o=e.length,a=e.slice();if(!o)return{t:Wt,l:0};if(o==1){var l=new z(e[0].s+1);return l[e[0].s]=1,{t:l,l:1}}e.sort(function(U,$){return U.f-$.f}),e.push({s:-1,f:25001});var u=e[0],h=e[1],i=0,s=1,f=2;for(e[0]={s:-1,f:u.f+h.f,l:u,r:h};s!=o-1;)u=e[e[i].f<e[f].f?i++:f++],h=e[i!=s&&e[i].f<e[f].f?i++:f++],e[s++]={s:-1,f:u.f+h.f,l:u,r:h};for(var c=a[0].s,n=1;n<o;++n)a[n].s>c&&(c=a[n].s);var p=new j(c+1),y=$t(e[s-1],p,0);if(y>r){var n=0,w=0,d=y-r,T=1<<d;for(a.sort(function($,N){return p[N.s]-p[$.s]||$.f-N.f});n<o;++n){var F=a[n].s;if(p[F]>r)w+=T-(1<<y-p[F]),p[F]=r;else break}for(w>>=d;w>0;){var C=a[n].s;p[C]<r?w-=1<<r-p[C]++-1:++n}for(;n>=0&&w;--n){var E=a[n].s;p[E]==r&&(--p[E],++w)}y=r}return{t:new z(p),l:y}},$t=function(t,r,e){return t.s==-1?Math.max($t(t.l,r,e+1),$t(t.r,r,e+1)):r[t.s]=e},Lt=function(t){for(var r=t.length;r&&!t[--r];);for(var e=new j(++r),n=0,o=t[0],a=1,l=function(h){e[n++]=h},u=1;u<=r;++u)if(t[u]==o&&u!=r)++a;else{if(!o&&a>2){for(;a>138;a-=138)l(32754);a>2&&(l(a>10?a-11<<5|28690:a-3<<5|12305),a=0)}else if(a>3){for(l(o),--a;a>6;a-=6)l(8304);a>2&&(l(a-3<<5|8208),a=0)}for(;a--;)l(o);a=1,o=t[u]}return{c:e.subarray(0,n),n:r}},ct=function(t,r){for(var e=0,n=0;n<r.length;++n)e+=t[n]*r[n];return e},Jt=function(t,r,e){var n=e.length,o=Rt(r+2);t[o]=n&255,t[o+1]=n>>8,t[o+2]=t[o]^255,t[o+3]=t[o+1]^255;for(var a=0;a<n;++a)t[o+a+4]=e[a];return(o+4+n)*8},bt=function(t,r,e,n,o,a,l,u,h,i,s){_(r,s++,e),++o[256];for(var f=Et(o,15),c=f.t,p=f.l,y=Et(a,15),w=y.t,d=y.l,T=Lt(c),F=T.c,C=T.n,E=Lt(w),U=E.c,$=E.n,N=new j(19),m=0;m<F.length;++m)++N[F[m]&31];for(var m=0;m<U.length;++m)++N[U[m]&31];for(var g=Et(N,7),D=g.t,M=g.l,k=19;k>4&&!D[Tt[k-1]];--k);var tt=i+5<<3,O=ct(o,rt)+ct(a,vt)+l,L=ct(o,c)+ct(a,w)+l+14+3*k+ct(N,D)+2*N[16]+3*N[17]+7*N[18];if(h>=0&&tt<=O&&tt<=L)return Jt(r,s,t.subarray(h,h+i));var B,S,b,I;if(_(r,s,1+(L<O)),s+=2,L<O){B=X(c,p,0),S=c,b=X(w,d,0),I=w;var ft=X(D,M,0);_(r,s,C-257),_(r,s+5,$-1),_(r,s+10,k-4),s+=14;for(var m=0;m<k;++m)_(r,s+3*m,D[Tt[m]]);s+=3*k;for(var H=[F,U],Y=0;Y<2;++Y)for(var Z=H[Y],m=0;m<Z.length;++m){var q=Z[m]&31;_(r,s,ft[q]),s+=D[q],q>15&&(_(r,s,Z[m]>>5&127),s+=Z[m]>>12)}}else B=ar,S=rt,b=fr,I=vt;for(var m=0;m<u;++m){var A=n[m];if(A>255){var q=A>>18&31;ht(r,s,B[q+257]),s+=S[q+257],q>7&&(_(r,s,A>>23&31),s+=xt[q]);var W=A&31;ht(r,s,b[W]),s+=I[W],W>3&&(ht(r,s,A>>5&8191),s+=zt[W])}else ht(r,s,B[A]),s+=S[A]}return ht(r,s,B[256]),s+S[256]},cr=new It([65540,131080,131088,131104,262176,1048704,1048832,2114560,2117632]),Wt=new z(0),vr=function(t,r,e,n,o,a){var l=a.z||t.length,u=new z(n+l+5*(1+Math.ceil(l/7e3))+o),h=u.subarray(n,u.length-o),i=a.l,s=(a.r||0)&7;if(r){s&&(h[0]=a.r>>3);for(var f=cr[r-1],c=f>>13,p=f&8191,y=(1<<e)-1,w=a.p||new j(32768),d=a.h||new j(y+1),T=Math.ceil(e/3),F=2*T,C=function(St){return(t[St]^t[St+1]<<T^t[St+2]<<F)&y},E=new It(25e3),U=new j(288),$=new j(32),N=0,m=0,g=a.i||0,D=0,M=a.w||0,k=0;g+2<l;++g){var tt=C(g),O=g&32767,L=d[tt];if(w[O]=L,d[tt]=O,M<=g){var B=l-g;if((N>7e3||D>24576)&&(B>423||!i)){s=bt(t,h,0,E,U,$,m,D,k,g-k,s),D=N=m=0,k=g;for(var S=0;S<286;++S)U[S]=0;for(var S=0;S<30;++S)$[S]=0}var b=2,I=0,ft=p,H=O-L&32767;if(B>2&&tt==C(g-H))for(var Y=Math.min(c,B)-1,Z=Math.min(32767,g),q=Math.min(258,B);H<=Z&&--ft&&O!=L;){if(t[g+b]==t[g+b-H]){for(var A=0;A<q&&t[g+A]==t[g+A-H];++A);if(A>b){if(b=A,I=H,A>Y)break;for(var W=Math.min(H,A-2),ot=0,S=0;S<W;++S){var at=g-H+S&32767,mt=w[at],wt=at-mt&32767;wt>ot&&(ot=wt,L=at)}}}O=L,L=w[O],H+=O-L&32767}if(I){E[D++]=268435456|Mt[b]<<18|Gt[I];var lt=Mt[b]&31,ut=Gt[I]&31;m+=xt[lt]+zt[ut],++U[257+lt],++$[ut],M=g+b,++N}else E[D++]=t[g],++U[t[g]]}}for(g=Math.max(g,M);g<l;++g)E[D++]=t[g],++U[t[g]];s=bt(t,h,i,E,U,$,m,D,k,g-k,s),i||(a.r=s&7|h[s/8|0]<<3,s-=7,a.h=d,a.p=w,a.i=g,a.w=M)}else{for(var g=a.w||0;g<l+i;g+=65535){var st=g+65535;st>=l&&(h[s/8|0]=i,st=l),s=Jt(h,s+1,t.subarray(g,st))}a.i=l}return gt(u,0,n+Rt(s)+o)},pr=(function(){for(var t=new Int32Array(256),r=0;r<256;++r){for(var e=r,n=9;--n;)e=(e&1&&-306674912)^e>>>1;t[r]=e}return t})(),gr=function(){var t=-1;return{p:function(r){for(var e=t,n=0;n<r.length;++n)e=pr[e&255^r[n]]^e>>>8;t=e},d:function(){return~t}}};var yr=function(t,r,e,n,o){if(!o&&(o={l:1},r.dictionary)){var a=r.dictionary.subarray(-32768),l=new z(a.length+t.length);l.set(a),l.set(t,a.length),t=l,o.w=a.length}return vr(t,r.level==null?6:r.level,r.mem==null?o.l?Math.ceil(Math.max(8,Math.min(13,Math.log(t.length)))*1.5):20:12+r.mem,e,n,o)},Vt=function(t,r){var e={};for(var n in t)e[n]=t[n];for(var n in r)e[n]=r[n];return e};var V=function(t,r){return t[r]|t[r+1]<<8},J=function(t,r){return(t[r]|t[r+1]<<8|t[r+2]<<16|t[r+3]<<24)>>>0},Nt=function(t,r){return J(t,r)+J(t,r+4)*4294967296},R=function(t,r,e){for(;e;++r)t[r]=e,e>>>=8};function mr(t,r){return yr(t,r||{},0,0)}function wr(t,r){return hr(t,{i:2},r&&r.out,r&&r.dictionary)}var Xt=function(t,r,e,n){for(var o in t){var a=t[o],l=r+o,u=n;Array.isArray(a)&&(u=Vt(n,a[1]),a=a[0]),a instanceof z?e[l]=[a,u]:(e[l+="/"]=[new z(0),u],Xt(a,l,e,n))}},Ot=typeof TextEncoder<"u"&&new TextEncoder,Dt=typeof TextDecoder<"u"&&new TextDecoder,xr=0;try{Dt.decode(Wt,{stream:!0}),xr=1}catch{}var zr=function(t){for(var r="",e=0;;){var n=t[e++],o=(n>127)+(n>223)+(n>239);if(e+o>t.length)return{s:r,r:gt(t,e-1)};o?o==3?(n=((n&15)<<18|(t[e++]&63)<<12|(t[e++]&63)<<6|t[e++]&63)-65536,r+=String.fromCharCode(55296|n>>10,56320|n&1023)):o&1?r+=String.fromCharCode((n&31)<<6|t[e++]&63):r+=String.fromCharCode((n&15)<<12|(t[e++]&63)<<6|t[e++]&63):r+=String.fromCharCode(n)}};function pt(t,r){if(r){for(var e=new z(t.length),n=0;n<t.length;++n)e[n]=t.charCodeAt(n);return e}if(Ot)return Ot.encode(t);for(var o=t.length,a=new z(t.length+(t.length>>1)),l=0,u=function(s){a[l++]=s},n=0;n<o;++n){if(l+5>a.length){var h=new z(l+8+(o-n<<1));h.set(a),a=h}var i=t.charCodeAt(n);i<128||r?u(i):i<2048?(u(192|i>>6),u(128|i&63)):i>55295&&i<57344?(i=65536+(i&1047552)|t.charCodeAt(++n)&1023,u(240|i>>18),u(128|i>>12&63),u(128|i>>6&63),u(128|i&63)):(u(224|i>>12),u(128|i>>6&63),u(128|i&63))}return gt(a,0,l)}function Ft(t,r){if(r){for(var e="",n=0;n<t.length;n+=16384)e+=String.fromCharCode.apply(null,t.subarray(n,n+16384));return e}else{if(Dt)return Dt.decode(t);var o=zr(t),a=o.s,e=o.r;return e.length&&P(8),a}}var dr=function(t,r){return r+30+V(t,r+26)+V(t,r+28)},Sr=function(t,r,e){var n=V(t,r+28),o=Ft(t.subarray(r+46,r+46+n),!(V(t,r+8)&2048)),a=r+46+n,l=J(t,r+20),u=e&&l==4294967295?Ar(t,a):[l,J(t,r+24),J(t,r+42)],h=u[0],i=u[1],s=u[2];return[V(t,r+10),h,i,o,a+V(t,r+30)+V(t,r+32),s]},Ar=function(t,r){for(;V(t,r)!=1;r+=4+V(t,r+2));return[Nt(t,r+12),Nt(t,r+4),Nt(t,r+20)]},Bt=function(t){var r=0;if(t)for(var e in t){var n=t[e].length;n>65535&&P(9),r+=n+4}return r},Zt=function(t,r,e,n,o,a,l,u){var h=n.length,i=e.extra,s=u&&u.length,f=Bt(i);R(t,r,l!=null?33639248:67324752),r+=4,l!=null&&(t[r++]=20,t[r++]=e.os),t[r]=20,r+=2,t[r++]=e.flag<<1|(a<0&&8),t[r++]=o&&8,t[r++]=e.compression&255,t[r++]=e.compression>>8;var c=new Date(e.mtime==null?Date.now():e.mtime),p=c.getFullYear()-1980;if((p<0||p>119)&&P(10),R(t,r,p<<25|c.getMonth()+1<<21|c.getDate()<<16|c.getHours()<<11|c.getMinutes()<<5|c.getSeconds()>>1),r+=4,a!=-1&&(R(t,r,e.crc),R(t,r+4,a<0?-a-2:a),R(t,r+8,e.size)),R(t,r+12,h),R(t,r+14,f),r+=16,l!=null&&(R(t,r,s),R(t,r+6,e.attrs),R(t,r+10,l),r+=14),t.set(n,r),r+=h,f)for(var y in i){var w=i[y],d=w.length;R(t,r,+y),R(t,r+2,d),t.set(w,r+4),r+=4+d}return s&&(t.set(u,r),r+=s),r},Cr=function(t,r,e,n,o){R(t,r,101010256),R(t,r+8,e),R(t,r+10,e),R(t,r+12,n),R(t,r+16,o)};function Yt(t,r){r||(r={});var e={},n=[];Xt(t,"",e,r);var o=0,a=0;for(var l in e){var u=e[l],h=u[0],i=u[1],s=i.level==0?0:8,f=pt(l),c=f.length,p=i.comment,y=p&&pt(p),w=y&&y.length,d=Bt(i.extra);c>65535&&P(11);var T=s?mr(h,i):h,F=T.length,C=gr();C.p(h),n.push(Vt(i,{size:h.length,crc:C.d(),c:T,f,m:y,u:c!=l.length||y&&p.length!=w,o,compression:s})),o+=30+c+d+F,a+=76+2*(c+d)+(w||0)+F}for(var E=new z(a+22),U=o,$=a-o,N=0;N<n.length;++N){var f=n[N];Zt(E,f.o,f,f.f,f.u,f.c.length);var m=30+f.f.length+Bt(f.extra);E.set(f.c,f.o+m),Zt(E,o,f,f.f,f.u,f.c.length,f.o,f.m),o+=16+m+(f.m?f.m.length:0)}return Cr(E,o,n.length,$,U),E}function Qt(t,r){for(var e={},n=t.length-22;J(t,n)!=101010256;--n)(!n||t.length-n>65558)&&P(13);var o=V(t,n+8);if(!o)return{};var a=J(t,n+16),l=a==4294967295||o==65535;if(l){var u=J(t,n-12);l=J(t,u)==101075792,l&&(o=J(t,u+32),a=J(t,u+48))}for(var h=r&&r.filter,i=0;i<o;++i){var s=Sr(t,a,l),f=s[0],c=s[1],p=s[2],y=s[3],w=s[4],d=s[5],T=dr(t,d);a=w,(!h||h({name:y,size:c,originalSize:p,compression:f}))&&(f?f==8?e[y]=wr(t.subarray(T,T+c),{out:new z(p)}):P(14,"unknown compression type "+f):e[y]=gt(t,T,T+c))}return e}var G="http://www.hancom.co.kr/hwpml/2011/paragraph",Er=()=>document.querySelector('input[aria-label="\uC6B4\uC601\uD604\uD669 \uBCF4\uACE0 \uC6D4"]')?.value||"",v=t=>String(t??"").replace(/\u00a0/g," ").trim(),et=t=>Math.max(0,Number.parseInt(String(t??"").replace(/,/g,""),10)||0),kt=["\uAC15\uACBD\uC74D","\uC5F0\uBB34\uC74D","\uC131\uB3D9\uBA74","\uAD11\uC11D\uBA74","\uB178\uC131\uBA74","\uC0C1\uC6D4\uBA74","\uBD80\uC801\uBA74","\uC5F0\uC0B0\uBA74","\uC591\uCD0C\uBA74","\uAC00\uC57C\uACE1\uBA74","\uC740\uC9C4\uBA74","\uCC44\uC6B4\uBA74","\uCDE8\uC554\uB3D9","\uBD80\uCC3D\uB3D9"];function _t(t,r){try{return JSON.parse(localStorage.getItem(t)||"null")??r}catch{return r}}function Nr(t){let r=_t(`volunteer-journal:operations:${t}`,[]),e=_t(`volunteer-journal:operations-details:${t}`,{}),n=(Array.isArray(e.programRows)?e.programRows:[]).filter(i=>v(i.program)||v(i.content)||v(i.participants)||v(i.date)),o=(Array.isArray(e.linkageRows)?e.linkageRows:[]).filter(i=>v(i.town)||v(i.recipientCategory)||v(i.recipient)||v(i.recipientAddress)||v(i.providerAddress)||v(i.date)||v(i.participants)||v(i.hours)||v(i.activity)||Array.isArray(i.selectedGroups)&&i.selectedGroups.length||v(i.extraGroups)),a=(Array.isArray(r)?r:[]).filter(i=>v(i.category)||v(i.activities)||v(i.participants)||v(i.participationCount)||v(i.operatingExpense)||v(i.materialExpense)||v(i.mealExpense)||v(i.otherExpense)||Array.isArray(i.selectedGroups)&&i.selectedGroups.length||v(i.extraGroups)),l=i=>{let s=kt.indexOf(i);return s<0?i==="\uACF5\uB3D9"?kt.length:kt.length+1:s};n.sort((i,s)=>l(v(i.center))-l(v(s.center))),o.sort((i,s)=>l(v(i.town))-l(v(s.town)));let u=new Set([...a.map(i=>v(i.town)),...n.map(i=>v(i.center)),...o.map(i=>v(i.town))].filter(Boolean)).size,h=new Map;for(let i of o){let s=v(i.town)||"\uACF5\uB3D9";h.has(s)||h.set(s,[]),h.get(s).push(i)}return{month:t,extras:e,programs:n,links:o,groups:[...h.entries()].sort((i,s)=>l(i[0])-l(s[0])),townshipCount:u||et(e.townshipCount),campCount:et(e.campCount),newCampCount:et(e.newCampCount),programPeople:n.reduce((i,s)=>i+et(s.participants),0),linkagePeople:o.reduce((i,s)=>i+et(s.participants),0)}}function Tr(t){return Array.from(t.getElementsByTagNameNS(G,"tbl"))}function nt(t){return Array.from(t.children).filter(r=>r.namespaceURI===G&&r.localName==="tr")}function it(t){return Array.from(t.children).filter(r=>r.namespaceURI===G&&r.localName==="tc")}function tr(t){return it(t).map(r=>Array.from(r.getElementsByTagNameNS(G,"t")).map(e=>e.textContent||"").join(""))}function Mr(t,r){let e=Array.from(t.getElementsByTagNameNS(G,"t"));if(!e.length)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD45C \uC140\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");e[0].textContent=String(r??"").replace(/\r?\n/g," ");for(let n of e.slice(1))n.textContent=""}function Pt(t,r){for(let e of it(t)){let n=e.getElementsByTagNameNS(G,"cellAddr").item(0);n&&n.setAttribute("rowAddr",String(r))}}function dt(t,r,e){let n=t.getElementsByTagNameNS(G,"cellSpan").item(0);n&&n.setAttribute(r,String(e))}function ir(t,r){for(let e of nt(t))t.removeChild(e);for(let e of r)t.appendChild(e);t.setAttribute("rowCnt",String(r.length))}function yt(t,r){let e=it(t);if(e.length!==r.length)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD45C \uC5F4 \uAD6C\uC131\uC774 \uC608\uC0C1\uACFC \uB2E4\uB985\uB2C8\uB2E4.");e.forEach((n,o)=>Mr(n,r[o]))}function Ur(t,r){let e=v(t),n=e.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!n){let h=e.match(/(?:^|\D)(\d{1,2})\s*[./월-]\s*(\d{1,2})/);if(!h)return e;n=[e,r.slice(0,4),String(Number(h[1])).padStart(2,"0"),String(Number(h[2])).padStart(2,"0")]}let o=Number(n[1]),a=Number(n[2]),l=Number(n[3]);if(!o||a<1||a>12||l<1||l>31)return e;let u=["\uC77C","\uC6D4","\uD654","\uC218","\uBAA9","\uAE08","\uD1A0"][new Date(o,a-1,l).getDay()];return`${a}.${l}.(${u})`}function rr(t){let r=v(t),e=r.match(/^\d{4}-(\d{2})-(\d{2})$/);return e?`${Number(e[1])}.${Number(e[2])}.`:r}function $r(t,r){return t==="\uC5F0\uBB34\uC74D"&&r==="\uC5F0\uBB34\uC74D \uC5EC\uC131\uC758\uC6A9\uC18C\uBC29\uB300"?"\uC5F0\uBB34\uC5EC\uC131 \uC758\uC6A9\uC18C\uBC29\uB300":r===`${t} \uAC70\uC810\uCEA0\uD504`?`${t.replace(/[읍면동]$/,"")}\uAC70\uC810`:r.startsWith(`${t} `)?r.slice(t.length+1):r}function er(t){let r=(Array.isArray(t.selectedGroups)?t.selectedGroups:[]).map(n=>$r(v(t.town),v(n))),e=String(t.extraGroups||"").split(/\r?\n/).map(n=>n.replace(/^\s*[•·\-*]\s*/,"").trim()).filter(Boolean);return[...new Set([...r,...e])].join(", ")}function nr(t){let r=et(t.participants),e=v(t.hours).replace(/\s*시간\s*$/,"");return`${r}\uBA85${e?`(${e}\uC2DC\uAC04)`:""}`}function Dr(t,r){let e=Array.from(t.children).find(o=>o.namespaceURI===G&&o.localName==="p"),n=e?Array.from(e.getElementsByTagNameNS(G,"t")):[];if(n.length<3)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC81C\uBAA9\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");n[0].textContent=`${r.slice(0,4)}\uB144`,n[1].textContent=` ${Number(r.slice(5))}\uC6D4 `}function Br(t,r){let e=nt(t);if(e.length<2||it(e[1]).length!==5)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uCD1D\uAD04\uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");yt(e[1],[r.townshipCount,r.campCount,r.newCampCount,`${r.programs.length}\uAC74 / ${r.programPeople.toLocaleString("ko-KR")}\uBA85`,`${r.links.length}\uAC74 / ${r.linkagePeople.toLocaleString("ko-KR")}\uBA85`])}function Ir(t,r){let e=nt(t);if(e.length<3)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD504\uB85C\uADF8\uB7A8 \uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let n=e[0].cloneNode(!0),o=e[1],a=e[e.length-1],l=[n];for(let[i,s]of r.programs.entries()){let f=o.cloneNode(!0);yt(f,[v(s.center),v(s.program),v(s.content),et(s.participants),Ur(s.date,r.month)]),Pt(f,i+1),l.push(f)}let u=a.cloneNode(!0);if(it(u).length!==2)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD504\uB85C\uADF8\uB7A8 \uD569\uACC4 \uC904\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");yt(u,["\uD569   \uACC4",`${r.programs.length}\uAC74  /  ${r.programPeople.toLocaleString("ko-KR")}\uBA85`]),Pt(u,l.length),l.push(u),ir(t,l)}function Rr(t,r,e,n,o,a){let l=nt(t);if(l.length<4)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC74D\uBA74\uB3D9\uBCC4 \uC5F0\uACC4 \uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let h=[...[l[0].cloneNode(!0),l[1].cloneNode(!0)]];if(n.forEach((i,s)=>{let f=(s===0?l[2]:l[3]).cloneNode(!0),c=s===0?[e,v(i.recipientCategory),v(i.recipient),v(i.recipientAddress),er(i),v(i.providerAddress),rr(i.date),nr(i),v(i.activity),v(i.registered)]:[v(i.recipientCategory),v(i.recipient),v(i.recipientAddress),er(i),v(i.providerAddress),rr(i.date),nr(i),v(i.activity),v(i.registered)];yt(f,c),Pt(f,s+2),s===0&&dt(it(f)[0],"rowSpan",n.length),h.push(f)}),o){let i=r.cloneNode(!0),s=it(i);if(s.length!==3)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC5F0\uACC4 \uD569\uACC4 \uC904\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");yt(i,["\uD569\uACC4",`${a.links.length}\uAC74 / ${a.linkagePeople.toLocaleString("ko-KR")}\uBA85`,""]),dt(s[0],"colSpan",8),dt(s[1],"colSpan",2),dt(s[2],"colSpan",1);let f=[0,8,10];s.forEach((c,p)=>{let y=c.getElementsByTagNameNS(G,"cellAddr").item(0);y&&(y.setAttribute("colAddr",String(f[p])),y.setAttribute("rowAddr",String(h.length)))}),h.push(i)}return ir(t,h),t}function Fr(t,r,e){if(r.length<4)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC74D\uBA74\uB3D9\uBCC4 \uC5F0\uACC4\uC2E4\uC801 \uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let n=Array.from(t.children).filter(i=>{if(i.namespaceURI!==G||i.localName!=="p")return!1;let s=i.getElementsByTagNameNS(G,"tbl").item(0);return s&&tr(nt(s)[0]).some(f=>/읍면/.test(f))&&tr(nt(s)[0]).some(f=>/수요자/.test(f))});if(n.length<2)throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC74D\uBA74\uB3D9 \uD45C \uD2C0\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let o=n[0].getElementsByTagNameNS(G,"tbl").item(0),a=n[n.length-1].getElementsByTagNameNS(G,"tbl").item(0),l=nt(a).at(-1).cloneNode(!0),u=n[n.length-1].nextSibling;for(let i of n)t.removeChild(i);let h=e.groups.length?e.groups:[["",[]]];h.forEach(([i,s],f)=>{let c=n[0].cloneNode(!0),p=c.getElementsByTagNameNS(G,"tbl").item(0);Rr(p,l,i,s,f===h.length-1&&e.links.length>0,e),t.insertBefore(c,u)})}async function kr(){let t=Er();if(!/^20\d{2}-(0[1-9]|1[0-2])$/.test(t))throw new Error("\uBA3C\uC800 \uC6B4\uC601\uD604\uD669 \uBCF4\uACE0 \uC6D4\uC744 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.");let r=Nr(t),e=await fetch(new URL("./center-operations-template.hwpx",import.meta.url));if(!e.ok)throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669 \uC11C\uC2DD \uD30C\uC77C\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let n=new Uint8Array(await e.arrayBuffer()),o=Qt(n),a=o["Contents/section0.xml"];if(!a)throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669 \uBCF8\uBB38\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let l=new DOMParser().parseFromString(Ft(a),"application/xml");if(l.querySelector("parsererror"))throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669 \uC11C\uC2DD\uC744 \uC77D\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");let u=l.documentElement,h=Tr(u);if(h.length<4)throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669\uC758 \uD45C \uC11C\uC2DD\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");Dr(u,t),Br(h[0],r),Ir(h[1],r),Fr(u,h,r),o["Contents/section0.xml"]=pt(new XMLSerializer().serializeToString(l)),o["Preview/PrvText.txt"]=pt(`${t} \uB17C\uC0B0\uC2DC \uAC70\uC810\uCEA0\uD504 \uC6B4\uC601 \uD604\uD669`);let i=Object.fromEntries(Object.entries(o).map(([y,w])=>[y,[w,{level:y==="mimetype"?0:6}]])),s=Yt(i),f=new Blob([s],{type:"application/haansofthwpx"}),c=URL.createObjectURL(f),p=document.createElement("a");p.href=c,p.download=`${t}_\uB17C\uC0B0\uC2DC_\uAC70\uC810\uCEA0\uD504_\uC6B4\uC601\uD604\uD669.hwpx`,p.click(),setTimeout(()=>URL.revokeObjectURL(c),1500)}document.addEventListener("click",t=>{let r=t.target,e=r instanceof Element?r.closest("button"):null;!e||v(e.textContent)!=="\uAC70\uC810\uC6B4\uC601\uD604\uD669 \uD55C\uAE00\uD30C\uC77C\uC800\uC7A5"||(t.preventDefault(),t.stopPropagation(),t.stopImmediatePropagation(),kr().catch(n=>window.alert(n instanceof Error?n.message:"\uD55C\uAE00 \uC6B4\uC601\uD604\uD669\uC744 \uB9CC\uB4E4\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.")))},!0);
+// node_modules/fflate/esm/browser.js
+var u8 = Uint8Array;
+var u16 = Uint16Array;
+var i32 = Int32Array;
+var fleb = new u8([
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  3,
+  3,
+  3,
+  3,
+  4,
+  4,
+  4,
+  4,
+  5,
+  5,
+  5,
+  5,
+  0,
+  /* unused */
+  0,
+  0,
+  /* impossible */
+  0
+]);
+var fdeb = new u8([
+  0,
+  0,
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  3,
+  3,
+  4,
+  4,
+  5,
+  5,
+  6,
+  6,
+  7,
+  7,
+  8,
+  8,
+  9,
+  9,
+  10,
+  10,
+  11,
+  11,
+  12,
+  12,
+  13,
+  13,
+  /* unused */
+  0,
+  0
+]);
+var clim = new u8([16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]);
+var freb = function(eb, start) {
+  var b = new u16(31);
+  for (var i = 0; i < 31; ++i) {
+    b[i] = start += 1 << eb[i - 1];
+  }
+  var r = new i32(b[30]);
+  for (var i = 1; i < 30; ++i) {
+    for (var j = b[i]; j < b[i + 1]; ++j) {
+      r[j] = j - b[i] << 5 | i;
+    }
+  }
+  return { b, r };
+};
+var _a = freb(fleb, 2);
+var fl = _a.b;
+var revfl = _a.r;
+fl[28] = 258, revfl[258] = 28;
+var _b = freb(fdeb, 0);
+var fd = _b.b;
+var revfd = _b.r;
+var rev = new u16(32768);
+for (i = 0; i < 32768; ++i) {
+  x = (i & 43690) >> 1 | (i & 21845) << 1;
+  x = (x & 52428) >> 2 | (x & 13107) << 2;
+  x = (x & 61680) >> 4 | (x & 3855) << 4;
+  rev[i] = ((x & 65280) >> 8 | (x & 255) << 8) >> 1;
+}
+var x;
+var i;
+var hMap = (function(cd, mb, r) {
+  var s = cd.length;
+  var i = 0;
+  var l = new u16(mb);
+  for (; i < s; ++i) {
+    if (cd[i])
+      ++l[cd[i] - 1];
+  }
+  var le = new u16(mb);
+  for (i = 1; i < mb; ++i) {
+    le[i] = le[i - 1] + l[i - 1] << 1;
+  }
+  var co;
+  if (r) {
+    co = new u16(1 << mb);
+    var rvb = 15 - mb;
+    for (i = 0; i < s; ++i) {
+      if (cd[i]) {
+        var sv = i << 4 | cd[i];
+        var r_1 = mb - cd[i];
+        var v = le[cd[i] - 1]++ << r_1;
+        for (var m = v | (1 << r_1) - 1; v <= m; ++v) {
+          co[rev[v] >> rvb] = sv;
+        }
+      }
+    }
+  } else {
+    co = new u16(s);
+    for (i = 0; i < s; ++i) {
+      if (cd[i]) {
+        co[i] = rev[le[cd[i] - 1]++] >> 15 - cd[i];
+      }
+    }
+  }
+  return co;
+});
+var flt = new u8(288);
+for (i = 0; i < 144; ++i)
+  flt[i] = 8;
+var i;
+for (i = 144; i < 256; ++i)
+  flt[i] = 9;
+var i;
+for (i = 256; i < 280; ++i)
+  flt[i] = 7;
+var i;
+for (i = 280; i < 288; ++i)
+  flt[i] = 8;
+var i;
+var fdt = new u8(32);
+for (i = 0; i < 32; ++i)
+  fdt[i] = 5;
+var i;
+var flm = /* @__PURE__ */ hMap(flt, 9, 0);
+var flrm = /* @__PURE__ */ hMap(flt, 9, 1);
+var fdm = /* @__PURE__ */ hMap(fdt, 5, 0);
+var fdrm = /* @__PURE__ */ hMap(fdt, 5, 1);
+var max = function(a) {
+  var m = a[0];
+  for (var i = 1; i < a.length; ++i) {
+    if (a[i] > m)
+      m = a[i];
+  }
+  return m;
+};
+var bits = function(d, p, m) {
+  var o = p / 8 | 0;
+  return (d[o] | d[o + 1] << 8) >> (p & 7) & m;
+};
+var bits16 = function(d, p) {
+  var o = p / 8 | 0;
+  return (d[o] | d[o + 1] << 8 | d[o + 2] << 16) >> (p & 7);
+};
+var shft = function(p) {
+  return (p + 7) / 8 | 0;
+};
+var slc = function(v, s, e) {
+  if (s == null || s < 0)
+    s = 0;
+  if (e == null || e > v.length)
+    e = v.length;
+  return new u8(v.subarray(s, e));
+};
+var ec = [
+  "unexpected EOF",
+  "invalid block type",
+  "invalid length/literal",
+  "invalid distance",
+  "stream finished",
+  "no stream handler",
+  ,
+  "no callback",
+  "invalid UTF-8 data",
+  "extra field too long",
+  "date not in range 1980-2099",
+  "filename too long",
+  "stream finishing",
+  "invalid zip data"
+  // determined by unknown compression method
+];
+var err = function(ind, msg, nt) {
+  var e = new Error(msg || ec[ind]);
+  e.code = ind;
+  if (Error.captureStackTrace)
+    Error.captureStackTrace(e, err);
+  if (!nt)
+    throw e;
+  return e;
+};
+var inflt = function(dat, st, buf, dict) {
+  var sl = dat.length, dl = dict ? dict.length : 0;
+  if (!sl || st.f && !st.l)
+    return buf || new u8(0);
+  var noBuf = !buf;
+  var resize = noBuf || st.i != 2;
+  var noSt = st.i;
+  if (noBuf)
+    buf = new u8(sl * 3);
+  var cbuf = function(l2) {
+    var bl = buf.length;
+    if (l2 > bl) {
+      var nbuf = new u8(Math.max(bl * 2, l2));
+      nbuf.set(buf);
+      buf = nbuf;
+    }
+  };
+  var final = st.f || 0, pos = st.p || 0, bt = st.b || 0, lm = st.l, dm = st.d, lbt = st.m, dbt = st.n;
+  var tbts = sl * 8;
+  do {
+    if (!lm) {
+      final = bits(dat, pos, 1);
+      var type = bits(dat, pos + 1, 3);
+      pos += 3;
+      if (!type) {
+        var s = shft(pos) + 4, l = dat[s - 4] | dat[s - 3] << 8, t = s + l;
+        if (t > sl) {
+          if (noSt)
+            err(0);
+          break;
+        }
+        if (resize)
+          cbuf(bt + l);
+        buf.set(dat.subarray(s, t), bt);
+        st.b = bt += l, st.p = pos = t * 8, st.f = final;
+        continue;
+      } else if (type == 1)
+        lm = flrm, dm = fdrm, lbt = 9, dbt = 5;
+      else if (type == 2) {
+        var hLit = bits(dat, pos, 31) + 257, hcLen = bits(dat, pos + 10, 15) + 4;
+        var tl = hLit + bits(dat, pos + 5, 31) + 1;
+        pos += 14;
+        var ldt = new u8(tl);
+        var clt = new u8(19);
+        for (var i = 0; i < hcLen; ++i) {
+          clt[clim[i]] = bits(dat, pos + i * 3, 7);
+        }
+        pos += hcLen * 3;
+        var clb = max(clt), clbmsk = (1 << clb) - 1;
+        var clm = hMap(clt, clb, 1);
+        for (var i = 0; i < tl; ) {
+          var r = clm[bits(dat, pos, clbmsk)];
+          pos += r & 15;
+          var s = r >> 4;
+          if (s < 16) {
+            ldt[i++] = s;
+          } else {
+            var c = 0, n = 0;
+            if (s == 16)
+              n = 3 + bits(dat, pos, 3), pos += 2, c = ldt[i - 1];
+            else if (s == 17)
+              n = 3 + bits(dat, pos, 7), pos += 3;
+            else if (s == 18)
+              n = 11 + bits(dat, pos, 127), pos += 7;
+            while (n--)
+              ldt[i++] = c;
+          }
+        }
+        var lt = ldt.subarray(0, hLit), dt = ldt.subarray(hLit);
+        lbt = max(lt);
+        dbt = max(dt);
+        lm = hMap(lt, lbt, 1);
+        dm = hMap(dt, dbt, 1);
+      } else
+        err(1);
+      if (pos > tbts) {
+        if (noSt)
+          err(0);
+        break;
+      }
+    }
+    if (resize)
+      cbuf(bt + 131072);
+    var lms = (1 << lbt) - 1, dms = (1 << dbt) - 1;
+    var lpos = pos;
+    for (; ; lpos = pos) {
+      var c = lm[bits16(dat, pos) & lms], sym = c >> 4;
+      pos += c & 15;
+      if (pos > tbts) {
+        if (noSt)
+          err(0);
+        break;
+      }
+      if (!c)
+        err(2);
+      if (sym < 256)
+        buf[bt++] = sym;
+      else if (sym == 256) {
+        lpos = pos, lm = null;
+        break;
+      } else {
+        var add = sym - 254;
+        if (sym > 264) {
+          var i = sym - 257, b = fleb[i];
+          add = bits(dat, pos, (1 << b) - 1) + fl[i];
+          pos += b;
+        }
+        var d = dm[bits16(dat, pos) & dms], dsym = d >> 4;
+        if (!d)
+          err(3);
+        pos += d & 15;
+        var dt = fd[dsym];
+        if (dsym > 3) {
+          var b = fdeb[dsym];
+          dt += bits16(dat, pos) & (1 << b) - 1, pos += b;
+        }
+        if (pos > tbts) {
+          if (noSt)
+            err(0);
+          break;
+        }
+        if (resize)
+          cbuf(bt + 131072);
+        var end = bt + add;
+        if (bt < dt) {
+          var shift = dl - dt, dend = Math.min(dt, end);
+          if (shift + bt < 0)
+            err(3);
+          for (; bt < dend; ++bt)
+            buf[bt] = dict[shift + bt];
+        }
+        for (; bt < end; ++bt)
+          buf[bt] = buf[bt - dt];
+      }
+    }
+    st.l = lm, st.p = lpos, st.b = bt, st.f = final;
+    if (lm)
+      final = 1, st.m = lbt, st.d = dm, st.n = dbt;
+  } while (!final);
+  return bt != buf.length && noBuf ? slc(buf, 0, bt) : buf.subarray(0, bt);
+};
+var wbits = function(d, p, v) {
+  v <<= p & 7;
+  var o = p / 8 | 0;
+  d[o] |= v;
+  d[o + 1] |= v >> 8;
+};
+var wbits16 = function(d, p, v) {
+  v <<= p & 7;
+  var o = p / 8 | 0;
+  d[o] |= v;
+  d[o + 1] |= v >> 8;
+  d[o + 2] |= v >> 16;
+};
+var hTree = function(d, mb) {
+  var t = [];
+  for (var i = 0; i < d.length; ++i) {
+    if (d[i])
+      t.push({ s: i, f: d[i] });
+  }
+  var s = t.length;
+  var t2 = t.slice();
+  if (!s)
+    return { t: et, l: 0 };
+  if (s == 1) {
+    var v = new u8(t[0].s + 1);
+    v[t[0].s] = 1;
+    return { t: v, l: 1 };
+  }
+  t.sort(function(a, b) {
+    return a.f - b.f;
+  });
+  t.push({ s: -1, f: 25001 });
+  var l = t[0], r = t[1], i0 = 0, i1 = 1, i2 = 2;
+  t[0] = { s: -1, f: l.f + r.f, l, r };
+  while (i1 != s - 1) {
+    l = t[t[i0].f < t[i2].f ? i0++ : i2++];
+    r = t[i0 != i1 && t[i0].f < t[i2].f ? i0++ : i2++];
+    t[i1++] = { s: -1, f: l.f + r.f, l, r };
+  }
+  var maxSym = t2[0].s;
+  for (var i = 1; i < s; ++i) {
+    if (t2[i].s > maxSym)
+      maxSym = t2[i].s;
+  }
+  var tr = new u16(maxSym + 1);
+  var mbt = ln(t[i1 - 1], tr, 0);
+  if (mbt > mb) {
+    var i = 0, dt = 0;
+    var lft = mbt - mb, cst = 1 << lft;
+    t2.sort(function(a, b) {
+      return tr[b.s] - tr[a.s] || a.f - b.f;
+    });
+    for (; i < s; ++i) {
+      var i2_1 = t2[i].s;
+      if (tr[i2_1] > mb) {
+        dt += cst - (1 << mbt - tr[i2_1]);
+        tr[i2_1] = mb;
+      } else
+        break;
+    }
+    dt >>= lft;
+    while (dt > 0) {
+      var i2_2 = t2[i].s;
+      if (tr[i2_2] < mb)
+        dt -= 1 << mb - tr[i2_2]++ - 1;
+      else
+        ++i;
+    }
+    for (; i >= 0 && dt; --i) {
+      var i2_3 = t2[i].s;
+      if (tr[i2_3] == mb) {
+        --tr[i2_3];
+        ++dt;
+      }
+    }
+    mbt = mb;
+  }
+  return { t: new u8(tr), l: mbt };
+};
+var ln = function(n, l, d) {
+  return n.s == -1 ? Math.max(ln(n.l, l, d + 1), ln(n.r, l, d + 1)) : l[n.s] = d;
+};
+var lc = function(c) {
+  var s = c.length;
+  while (s && !c[--s])
+    ;
+  var cl = new u16(++s);
+  var cli = 0, cln = c[0], cls = 1;
+  var w = function(v) {
+    cl[cli++] = v;
+  };
+  for (var i = 1; i <= s; ++i) {
+    if (c[i] == cln && i != s)
+      ++cls;
+    else {
+      if (!cln && cls > 2) {
+        for (; cls > 138; cls -= 138)
+          w(32754);
+        if (cls > 2) {
+          w(cls > 10 ? cls - 11 << 5 | 28690 : cls - 3 << 5 | 12305);
+          cls = 0;
+        }
+      } else if (cls > 3) {
+        w(cln), --cls;
+        for (; cls > 6; cls -= 6)
+          w(8304);
+        if (cls > 2)
+          w(cls - 3 << 5 | 8208), cls = 0;
+      }
+      while (cls--)
+        w(cln);
+      cls = 1;
+      cln = c[i];
+    }
+  }
+  return { c: cl.subarray(0, cli), n: s };
+};
+var clen = function(cf, cl) {
+  var l = 0;
+  for (var i = 0; i < cl.length; ++i)
+    l += cf[i] * cl[i];
+  return l;
+};
+var wfblk = function(out, pos, dat) {
+  var s = dat.length;
+  var o = shft(pos + 2);
+  out[o] = s & 255;
+  out[o + 1] = s >> 8;
+  out[o + 2] = out[o] ^ 255;
+  out[o + 3] = out[o + 1] ^ 255;
+  for (var i = 0; i < s; ++i)
+    out[o + i + 4] = dat[i];
+  return (o + 4 + s) * 8;
+};
+var wblk = function(dat, out, final, syms, lf, df, eb, li, bs, bl, p) {
+  wbits(out, p++, final);
+  ++lf[256];
+  var _a2 = hTree(lf, 15), dlt = _a2.t, mlb = _a2.l;
+  var _b2 = hTree(df, 15), ddt = _b2.t, mdb = _b2.l;
+  var _c = lc(dlt), lclt = _c.c, nlc = _c.n;
+  var _d = lc(ddt), lcdt = _d.c, ndc = _d.n;
+  var lcfreq = new u16(19);
+  for (var i = 0; i < lclt.length; ++i)
+    ++lcfreq[lclt[i] & 31];
+  for (var i = 0; i < lcdt.length; ++i)
+    ++lcfreq[lcdt[i] & 31];
+  var _e = hTree(lcfreq, 7), lct = _e.t, mlcb = _e.l;
+  var nlcc = 19;
+  for (; nlcc > 4 && !lct[clim[nlcc - 1]]; --nlcc)
+    ;
+  var flen = bl + 5 << 3;
+  var ftlen = clen(lf, flt) + clen(df, fdt) + eb;
+  var dtlen = clen(lf, dlt) + clen(df, ddt) + eb + 14 + 3 * nlcc + clen(lcfreq, lct) + 2 * lcfreq[16] + 3 * lcfreq[17] + 7 * lcfreq[18];
+  if (bs >= 0 && flen <= ftlen && flen <= dtlen)
+    return wfblk(out, p, dat.subarray(bs, bs + bl));
+  var lm, ll, dm, dl;
+  wbits(out, p, 1 + (dtlen < ftlen)), p += 2;
+  if (dtlen < ftlen) {
+    lm = hMap(dlt, mlb, 0), ll = dlt, dm = hMap(ddt, mdb, 0), dl = ddt;
+    var llm = hMap(lct, mlcb, 0);
+    wbits(out, p, nlc - 257);
+    wbits(out, p + 5, ndc - 1);
+    wbits(out, p + 10, nlcc - 4);
+    p += 14;
+    for (var i = 0; i < nlcc; ++i)
+      wbits(out, p + 3 * i, lct[clim[i]]);
+    p += 3 * nlcc;
+    var lcts = [lclt, lcdt];
+    for (var it = 0; it < 2; ++it) {
+      var clct = lcts[it];
+      for (var i = 0; i < clct.length; ++i) {
+        var len = clct[i] & 31;
+        wbits(out, p, llm[len]), p += lct[len];
+        if (len > 15)
+          wbits(out, p, clct[i] >> 5 & 127), p += clct[i] >> 12;
+      }
+    }
+  } else {
+    lm = flm, ll = flt, dm = fdm, dl = fdt;
+  }
+  for (var i = 0; i < li; ++i) {
+    var sym = syms[i];
+    if (sym > 255) {
+      var len = sym >> 18 & 31;
+      wbits16(out, p, lm[len + 257]), p += ll[len + 257];
+      if (len > 7)
+        wbits(out, p, sym >> 23 & 31), p += fleb[len];
+      var dst = sym & 31;
+      wbits16(out, p, dm[dst]), p += dl[dst];
+      if (dst > 3)
+        wbits16(out, p, sym >> 5 & 8191), p += fdeb[dst];
+    } else {
+      wbits16(out, p, lm[sym]), p += ll[sym];
+    }
+  }
+  wbits16(out, p, lm[256]);
+  return p + ll[256];
+};
+var deo = /* @__PURE__ */ new i32([65540, 131080, 131088, 131104, 262176, 1048704, 1048832, 2114560, 2117632]);
+var et = /* @__PURE__ */ new u8(0);
+var dflt = function(dat, lvl, plvl, pre, post, st) {
+  var s = st.z || dat.length;
+  var o = new u8(pre + s + 5 * (1 + Math.ceil(s / 7e3)) + post);
+  var w = o.subarray(pre, o.length - post);
+  var lst = st.l;
+  var pos = (st.r || 0) & 7;
+  if (lvl) {
+    if (pos)
+      w[0] = st.r >> 3;
+    var opt = deo[lvl - 1];
+    var n = opt >> 13, c = opt & 8191;
+    var msk_1 = (1 << plvl) - 1;
+    var prev = st.p || new u16(32768), head = st.h || new u16(msk_1 + 1);
+    var bs1_1 = Math.ceil(plvl / 3), bs2_1 = 2 * bs1_1;
+    var hsh = function(i2) {
+      return (dat[i2] ^ dat[i2 + 1] << bs1_1 ^ dat[i2 + 2] << bs2_1) & msk_1;
+    };
+    var syms = new i32(25e3);
+    var lf = new u16(288), df = new u16(32);
+    var lc_1 = 0, eb = 0, i = st.i || 0, li = 0, wi = st.w || 0, bs = 0;
+    for (; i + 2 < s; ++i) {
+      var hv = hsh(i);
+      var imod = i & 32767, pimod = head[hv];
+      prev[imod] = pimod;
+      head[hv] = imod;
+      if (wi <= i) {
+        var rem = s - i;
+        if ((lc_1 > 7e3 || li > 24576) && (rem > 423 || !lst)) {
+          pos = wblk(dat, w, 0, syms, lf, df, eb, li, bs, i - bs, pos);
+          li = lc_1 = eb = 0, bs = i;
+          for (var j = 0; j < 286; ++j)
+            lf[j] = 0;
+          for (var j = 0; j < 30; ++j)
+            df[j] = 0;
+        }
+        var l = 2, d = 0, ch_1 = c, dif = imod - pimod & 32767;
+        if (rem > 2 && hv == hsh(i - dif)) {
+          var maxn = Math.min(n, rem) - 1;
+          var maxd = Math.min(32767, i);
+          var ml = Math.min(258, rem);
+          while (dif <= maxd && --ch_1 && imod != pimod) {
+            if (dat[i + l] == dat[i + l - dif]) {
+              var nl = 0;
+              for (; nl < ml && dat[i + nl] == dat[i + nl - dif]; ++nl)
+                ;
+              if (nl > l) {
+                l = nl, d = dif;
+                if (nl > maxn)
+                  break;
+                var mmd = Math.min(dif, nl - 2);
+                var md = 0;
+                for (var j = 0; j < mmd; ++j) {
+                  var ti = i - dif + j & 32767;
+                  var pti = prev[ti];
+                  var cd = ti - pti & 32767;
+                  if (cd > md)
+                    md = cd, pimod = ti;
+                }
+              }
+            }
+            imod = pimod, pimod = prev[imod];
+            dif += imod - pimod & 32767;
+          }
+        }
+        if (d) {
+          syms[li++] = 268435456 | revfl[l] << 18 | revfd[d];
+          var lin = revfl[l] & 31, din = revfd[d] & 31;
+          eb += fleb[lin] + fdeb[din];
+          ++lf[257 + lin];
+          ++df[din];
+          wi = i + l;
+          ++lc_1;
+        } else {
+          syms[li++] = dat[i];
+          ++lf[dat[i]];
+        }
+      }
+    }
+    for (i = Math.max(i, wi); i < s; ++i) {
+      syms[li++] = dat[i];
+      ++lf[dat[i]];
+    }
+    pos = wblk(dat, w, lst, syms, lf, df, eb, li, bs, i - bs, pos);
+    if (!lst) {
+      st.r = pos & 7 | w[pos / 8 | 0] << 3;
+      pos -= 7;
+      st.h = head, st.p = prev, st.i = i, st.w = wi;
+    }
+  } else {
+    for (var i = st.w || 0; i < s + lst; i += 65535) {
+      var e = i + 65535;
+      if (e >= s) {
+        w[pos / 8 | 0] = lst;
+        e = s;
+      }
+      pos = wfblk(w, pos + 1, dat.subarray(i, e));
+    }
+    st.i = s;
+  }
+  return slc(o, 0, pre + shft(pos) + post);
+};
+var crct = /* @__PURE__ */ (function() {
+  var t = new Int32Array(256);
+  for (var i = 0; i < 256; ++i) {
+    var c = i, k = 9;
+    while (--k)
+      c = (c & 1 && -306674912) ^ c >>> 1;
+    t[i] = c;
+  }
+  return t;
+})();
+var crc = function() {
+  var c = -1;
+  return {
+    p: function(d) {
+      var cr = c;
+      for (var i = 0; i < d.length; ++i)
+        cr = crct[cr & 255 ^ d[i]] ^ cr >>> 8;
+      c = cr;
+    },
+    d: function() {
+      return ~c;
+    }
+  };
+};
+var dopt = function(dat, opt, pre, post, st) {
+  if (!st) {
+    st = { l: 1 };
+    if (opt.dictionary) {
+      var dict = opt.dictionary.subarray(-32768);
+      var newDat = new u8(dict.length + dat.length);
+      newDat.set(dict);
+      newDat.set(dat, dict.length);
+      dat = newDat;
+      st.w = dict.length;
+    }
+  }
+  return dflt(dat, opt.level == null ? 6 : opt.level, opt.mem == null ? st.l ? Math.ceil(Math.max(8, Math.min(13, Math.log(dat.length))) * 1.5) : 20 : 12 + opt.mem, pre, post, st);
+};
+var mrg = function(a, b) {
+  var o = {};
+  for (var k in a)
+    o[k] = a[k];
+  for (var k in b)
+    o[k] = b[k];
+  return o;
+};
+var b2 = function(d, b) {
+  return d[b] | d[b + 1] << 8;
+};
+var b4 = function(d, b) {
+  return (d[b] | d[b + 1] << 8 | d[b + 2] << 16 | d[b + 3] << 24) >>> 0;
+};
+var b8 = function(d, b) {
+  return b4(d, b) + b4(d, b + 4) * 4294967296;
+};
+var wbytes = function(d, b, v) {
+  for (; v; ++b)
+    d[b] = v, v >>>= 8;
+};
+function deflateSync(data, opts) {
+  return dopt(data, opts || {}, 0, 0);
+}
+function inflateSync(data, opts) {
+  return inflt(data, { i: 2 }, opts && opts.out, opts && opts.dictionary);
+}
+var fltn = function(d, p, t, o) {
+  for (var k in d) {
+    var val = d[k], n = p + k, op = o;
+    if (Array.isArray(val))
+      op = mrg(o, val[1]), val = val[0];
+    if (val instanceof u8)
+      t[n] = [val, op];
+    else {
+      t[n += "/"] = [new u8(0), op];
+      fltn(val, n, t, o);
+    }
+  }
+};
+var te = typeof TextEncoder != "undefined" && /* @__PURE__ */ new TextEncoder();
+var td = typeof TextDecoder != "undefined" && /* @__PURE__ */ new TextDecoder();
+var tds = 0;
+try {
+  td.decode(et, { stream: true });
+  tds = 1;
+} catch (e) {
+}
+var dutf8 = function(d) {
+  for (var r = "", i = 0; ; ) {
+    var c = d[i++];
+    var eb = (c > 127) + (c > 223) + (c > 239);
+    if (i + eb > d.length)
+      return { s: r, r: slc(d, i - 1) };
+    if (!eb)
+      r += String.fromCharCode(c);
+    else if (eb == 3) {
+      c = ((c & 15) << 18 | (d[i++] & 63) << 12 | (d[i++] & 63) << 6 | d[i++] & 63) - 65536, r += String.fromCharCode(55296 | c >> 10, 56320 | c & 1023);
+    } else if (eb & 1)
+      r += String.fromCharCode((c & 31) << 6 | d[i++] & 63);
+    else
+      r += String.fromCharCode((c & 15) << 12 | (d[i++] & 63) << 6 | d[i++] & 63);
+  }
+};
+function strToU8(str, latin1) {
+  if (latin1) {
+    var ar_1 = new u8(str.length);
+    for (var i = 0; i < str.length; ++i)
+      ar_1[i] = str.charCodeAt(i);
+    return ar_1;
+  }
+  if (te)
+    return te.encode(str);
+  var l = str.length;
+  var ar = new u8(str.length + (str.length >> 1));
+  var ai = 0;
+  var w = function(v) {
+    ar[ai++] = v;
+  };
+  for (var i = 0; i < l; ++i) {
+    if (ai + 5 > ar.length) {
+      var n = new u8(ai + 8 + (l - i << 1));
+      n.set(ar);
+      ar = n;
+    }
+    var c = str.charCodeAt(i);
+    if (c < 128 || latin1)
+      w(c);
+    else if (c < 2048)
+      w(192 | c >> 6), w(128 | c & 63);
+    else if (c > 55295 && c < 57344)
+      c = 65536 + (c & 1023 << 10) | str.charCodeAt(++i) & 1023, w(240 | c >> 18), w(128 | c >> 12 & 63), w(128 | c >> 6 & 63), w(128 | c & 63);
+    else
+      w(224 | c >> 12), w(128 | c >> 6 & 63), w(128 | c & 63);
+  }
+  return slc(ar, 0, ai);
+}
+function strFromU8(dat, latin1) {
+  if (latin1) {
+    var r = "";
+    for (var i = 0; i < dat.length; i += 16384)
+      r += String.fromCharCode.apply(null, dat.subarray(i, i + 16384));
+    return r;
+  } else if (td) {
+    return td.decode(dat);
+  } else {
+    var _a2 = dutf8(dat), s = _a2.s, r = _a2.r;
+    if (r.length)
+      err(8);
+    return s;
+  }
+}
+var slzh = function(d, b) {
+  return b + 30 + b2(d, b + 26) + b2(d, b + 28);
+};
+var zh = function(d, b, z) {
+  var fnl = b2(d, b + 28), fn = strFromU8(d.subarray(b + 46, b + 46 + fnl), !(b2(d, b + 8) & 2048)), es = b + 46 + fnl, bs = b4(d, b + 20);
+  var _a2 = z && bs == 4294967295 ? z64e(d, es) : [bs, b4(d, b + 24), b4(d, b + 42)], sc = _a2[0], su = _a2[1], off = _a2[2];
+  return [b2(d, b + 10), sc, su, fn, es + b2(d, b + 30) + b2(d, b + 32), off];
+};
+var z64e = function(d, b) {
+  for (; b2(d, b) != 1; b += 4 + b2(d, b + 2))
+    ;
+  return [b8(d, b + 12), b8(d, b + 4), b8(d, b + 20)];
+};
+var exfl = function(ex) {
+  var le = 0;
+  if (ex) {
+    for (var k in ex) {
+      var l = ex[k].length;
+      if (l > 65535)
+        err(9);
+      le += l + 4;
+    }
+  }
+  return le;
+};
+var wzh = function(d, b, f, fn, u, c, ce, co) {
+  var fl2 = fn.length, ex = f.extra, col = co && co.length;
+  var exl = exfl(ex);
+  wbytes(d, b, ce != null ? 33639248 : 67324752), b += 4;
+  if (ce != null)
+    d[b++] = 20, d[b++] = f.os;
+  d[b] = 20, b += 2;
+  d[b++] = f.flag << 1 | (c < 0 && 8), d[b++] = u && 8;
+  d[b++] = f.compression & 255, d[b++] = f.compression >> 8;
+  var dt = new Date(f.mtime == null ? Date.now() : f.mtime), y = dt.getFullYear() - 1980;
+  if (y < 0 || y > 119)
+    err(10);
+  wbytes(d, b, y << 25 | dt.getMonth() + 1 << 21 | dt.getDate() << 16 | dt.getHours() << 11 | dt.getMinutes() << 5 | dt.getSeconds() >> 1), b += 4;
+  if (c != -1) {
+    wbytes(d, b, f.crc);
+    wbytes(d, b + 4, c < 0 ? -c - 2 : c);
+    wbytes(d, b + 8, f.size);
+  }
+  wbytes(d, b + 12, fl2);
+  wbytes(d, b + 14, exl), b += 16;
+  if (ce != null) {
+    wbytes(d, b, col);
+    wbytes(d, b + 6, f.attrs);
+    wbytes(d, b + 10, ce), b += 14;
+  }
+  d.set(fn, b);
+  b += fl2;
+  if (exl) {
+    for (var k in ex) {
+      var exf = ex[k], l = exf.length;
+      wbytes(d, b, +k);
+      wbytes(d, b + 2, l);
+      d.set(exf, b + 4), b += 4 + l;
+    }
+  }
+  if (col)
+    d.set(co, b), b += col;
+  return b;
+};
+var wzf = function(o, b, c, d, e) {
+  wbytes(o, b, 101010256);
+  wbytes(o, b + 8, c);
+  wbytes(o, b + 10, c);
+  wbytes(o, b + 12, d);
+  wbytes(o, b + 16, e);
+};
+function zipSync(data, opts) {
+  if (!opts)
+    opts = {};
+  var r = {};
+  var files = [];
+  fltn(data, "", r, opts);
+  var o = 0;
+  var tot = 0;
+  for (var fn in r) {
+    var _a2 = r[fn], file = _a2[0], p = _a2[1];
+    var compression = p.level == 0 ? 0 : 8;
+    var f = strToU8(fn), s = f.length;
+    var com = p.comment, m = com && strToU8(com), ms = m && m.length;
+    var exl = exfl(p.extra);
+    if (s > 65535)
+      err(11);
+    var d = compression ? deflateSync(file, p) : file, l = d.length;
+    var c = crc();
+    c.p(file);
+    files.push(mrg(p, {
+      size: file.length,
+      crc: c.d(),
+      c: d,
+      f,
+      m,
+      u: s != fn.length || m && com.length != ms,
+      o,
+      compression
+    }));
+    o += 30 + s + exl + l;
+    tot += 76 + 2 * (s + exl) + (ms || 0) + l;
+  }
+  var out = new u8(tot + 22), oe = o, cdl = tot - o;
+  for (var i = 0; i < files.length; ++i) {
+    var f = files[i];
+    wzh(out, f.o, f, f.f, f.u, f.c.length);
+    var badd = 30 + f.f.length + exfl(f.extra);
+    out.set(f.c, f.o + badd);
+    wzh(out, o, f, f.f, f.u, f.c.length, f.o, f.m), o += 16 + badd + (f.m ? f.m.length : 0);
+  }
+  wzf(out, o, files.length, cdl, oe);
+  return out;
+}
+function unzipSync(data, opts) {
+  var files = {};
+  var e = data.length - 22;
+  for (; b4(data, e) != 101010256; --e) {
+    if (!e || data.length - e > 65558)
+      err(13);
+  }
+  ;
+  var c = b2(data, e + 8);
+  if (!c)
+    return {};
+  var o = b4(data, e + 16);
+  var z = o == 4294967295 || c == 65535;
+  if (z) {
+    var ze = b4(data, e - 12);
+    z = b4(data, ze) == 101075792;
+    if (z) {
+      c = b4(data, ze + 32);
+      o = b4(data, ze + 48);
+    }
+  }
+  var fltr = opts && opts.filter;
+  for (var i = 0; i < c; ++i) {
+    var _a2 = zh(data, o, z), c_2 = _a2[0], sc = _a2[1], su = _a2[2], fn = _a2[3], no = _a2[4], off = _a2[5], b = slzh(data, off);
+    o = no;
+    if (!fltr || fltr({
+      name: fn,
+      size: sc,
+      originalSize: su,
+      compression: c_2
+    })) {
+      if (!c_2)
+        files[fn] = slc(data, b, b + sc);
+      else if (c_2 == 8)
+        files[fn] = inflateSync(data.subarray(b, b + sc), { out: new u8(su) });
+      else
+        err(14, "unknown compression type " + c_2);
+    }
+  }
+  return files;
+}
+
+// .github-sync/scripts/center-operations-hwpx-export.js
+var HP = "http://www.hancom.co.kr/hwpml/2011/paragraph";
+var monthInput = () => document.querySelector('input[aria-label="\uC6B4\uC601\uD604\uD669 \uBCF4\uACE0 \uC6D4"]')?.value || "";
+var text = (value) => String(value ?? "").replace(/\u00a0/g, " ").trim();
+var integer = (value) => Math.max(0, Number.parseInt(String(value ?? "").replace(/,/g, ""), 10) || 0);
+var centers = ["\uAC15\uACBD\uC74D", "\uC5F0\uBB34\uC74D", "\uC131\uB3D9\uBA74", "\uAD11\uC11D\uBA74", "\uB178\uC131\uBA74", "\uC0C1\uC6D4\uBA74", "\uBD80\uC801\uBA74", "\uC5F0\uC0B0\uBA74", "\uC591\uCD0C\uBA74", "\uAC00\uC57C\uACE1\uBA74", "\uC740\uC9C4\uBA74", "\uCC44\uC6B4\uBA74", "\uCDE8\uC554\uB3D9", "\uBD80\uCC3D\uB3D9"];
+function readJson(key, fallback) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "null");
+    return value ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+function dataForMonth(month) {
+  const rows2 = readJson(`volunteer-journal:operations:${month}`, []);
+  const extras = readJson(`volunteer-journal:operations-details:${month}`, {});
+  const programs = (Array.isArray(extras.programRows) ? extras.programRows : []).filter(
+    (row) => text(row.program) || text(row.content) || text(row.participants) || text(row.date)
+  );
+  const links = (Array.isArray(extras.linkageRows) ? extras.linkageRows : []).filter(
+    (row) => text(row.town) || text(row.recipientCategory) || text(row.recipient) || text(row.recipientAddress) || text(row.providerAddress) || text(row.date) || text(row.participants) || text(row.hours) || text(row.activity) || Array.isArray(row.selectedGroups) && row.selectedGroups.length || text(row.extraGroups)
+  );
+  const activeRows = (Array.isArray(rows2) ? rows2 : []).filter(
+    (row) => text(row.category) || text(row.activities) || text(row.participants) || text(row.participationCount) || text(row.operatingExpense) || text(row.materialExpense) || text(row.mealExpense) || text(row.otherExpense) || Array.isArray(row.selectedGroups) && row.selectedGroups.length || text(row.extraGroups)
+  );
+  const townOrder = (town) => {
+    const index = centers.indexOf(town);
+    return index < 0 ? town === "\uACF5\uB3D9" ? centers.length : centers.length + 1 : index;
+  };
+  programs.sort((a, b) => townOrder(text(a.center)) - townOrder(text(b.center)));
+  links.sort((a, b) => townOrder(text(a.town)) - townOrder(text(b.town)));
+  const townCount = new Set([
+    ...activeRows.map((row) => text(row.town)),
+    ...programs.map((row) => text(row.center)),
+    ...links.map((row) => text(row.town))
+  ].filter(Boolean)).size;
+  const groups = /* @__PURE__ */ new Map();
+  for (const row of links) {
+    const town = text(row.town) || "\uACF5\uB3D9";
+    if (!groups.has(town)) groups.set(town, []);
+    groups.get(town).push(row);
+  }
+  return {
+    month,
+    extras,
+    programs,
+    links,
+    groups: [...groups.entries()].sort((a, b) => townOrder(a[0]) - townOrder(b[0])),
+    townshipCount: townCount || integer(extras.townshipCount),
+    campCount: integer(extras.campCount),
+    newCampCount: integer(extras.newCampCount),
+    programPeople: programs.reduce((sum, row) => sum + integer(row.participants), 0),
+    linkagePeople: links.reduce((sum, row) => sum + integer(row.participants), 0)
+  };
+}
+function allTables(root) {
+  return Array.from(root.getElementsByTagNameNS(HP, "tbl"));
+}
+function rows(table) {
+  return Array.from(table.children).filter((child) => child.namespaceURI === HP && child.localName === "tr");
+}
+function cells(row) {
+  return Array.from(row.children).filter((child) => child.namespaceURI === HP && child.localName === "tc");
+}
+function rowTexts(row) {
+  return cells(row).map((cell) => Array.from(cell.getElementsByTagNameNS(HP, "t")).map((node) => node.textContent || "").join(""));
+}
+function setCellText(cell, value) {
+  for (const paragraph of Array.from(cell.getElementsByTagNameNS(HP, "p"))) {
+    for (const child of Array.from(paragraph.children)) {
+      if (child.namespaceURI === HP && child.localName === "linesegarray") paragraph.removeChild(child);
+    }
+  }
+  let nodes = Array.from(cell.getElementsByTagNameNS(HP, "t"));
+  if (!nodes.length) {
+    if (String(value ?? "") === "") return;
+    const run = cell.getElementsByTagNameNS(HP, "run").item(0);
+    if (!run) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD45C \uC140\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+    const node = cell.ownerDocument.createElementNS(HP, "hp:t");
+    run.appendChild(node);
+    nodes = [node];
+  }
+  nodes[0].textContent = String(value ?? "").replace(/\r?\n/g, " ");
+  for (const node of nodes.slice(1)) node.textContent = "";
+}
+function setRowAddress(row, rowIndex) {
+  for (const cell of cells(row)) {
+    const address = cell.getElementsByTagNameNS(HP, "cellAddr").item(0);
+    if (address) address.setAttribute("rowAddr", String(rowIndex));
+  }
+}
+function replaceRows(table, nextRows) {
+  for (const row of rows(table)) table.removeChild(row);
+  for (const row of nextRows) table.appendChild(row);
+  table.setAttribute("rowCnt", String(nextRows.length));
+}
+function setTableCellValues(row, values) {
+  const tableCells = cells(row);
+  if (tableCells.length !== values.length) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD45C \uC5F4 \uAD6C\uC131\uC774 \uC608\uC0C1\uACFC \uB2E4\uB985\uB2C8\uB2E4.");
+  tableCells.forEach((cell, index) => setCellText(cell, values[index]));
+}
+function programDate(value, month) {
+  const raw = text(value);
+  let match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) {
+    const short = raw.match(/(?:^|\D)(\d{1,2})\s*[./월-]\s*(\d{1,2})/);
+    if (!short) return raw;
+    match = [raw, month.slice(0, 4), String(Number(short[1])).padStart(2, "0"), String(Number(short[2])).padStart(2, "0")];
+  }
+  const year = Number(match[1]), m = Number(match[2]), day = Number(match[3]);
+  if (!year || m < 1 || m > 12 || day < 1 || day > 31) return raw;
+  const weekday = ["\uC77C", "\uC6D4", "\uD654", "\uC218", "\uBAA9", "\uAE08", "\uD1A0"][new Date(year, m - 1, day).getDay()];
+  return `${m}.${day}.(${weekday})`;
+}
+function linkageDate(value) {
+  const raw = text(value);
+  const iso = raw.match(/^\d{4}-(\d{2})-(\d{2})$/);
+  return iso ? `${Number(iso[1])}.${Number(iso[2])}.` : raw;
+}
+function groupLabel(town, name) {
+  if (town === "\uC5F0\uBB34\uC74D" && name === "\uC5F0\uBB34\uC74D \uC5EC\uC131\uC758\uC6A9\uC18C\uBC29\uB300") return "\uC5F0\uBB34\uC5EC\uC131 \uC758\uC6A9\uC18C\uBC29\uB300";
+  if (name === `${town} \uAC70\uC810\uCEA0\uD504`) return `${town.replace(/[읍면동]$/, "")}\uAC70\uC810`;
+  return name.startsWith(`${town} `) ? name.slice(town.length + 1) : name;
+}
+function supplierNames(row) {
+  const selected = (Array.isArray(row.selectedGroups) ? row.selectedGroups : []).map((name) => groupLabel(text(row.town), text(name)));
+  const extras = String(row.extraGroups || "").split(/\r?\n/).map((name) => name.replace(/^\s*[•·\-*]\s*/, "").trim()).filter(Boolean);
+  return [.../* @__PURE__ */ new Set([...selected, ...extras])].join(", ");
+}
+function linkagePeopleCell(row) {
+  const people = integer(row.participants);
+  const hours = text(row.hours).replace(/\s*시간\s*$/, "");
+  return `${people}\uBA85${hours ? `(${hours}\uC2DC\uAC04)` : ""}`;
+}
+function updateTitle(root, month) {
+  const title = Array.from(root.children).find((child) => child.namespaceURI === HP && child.localName === "p");
+  const nodes = title ? Array.from(title.getElementsByTagNameNS(HP, "t")) : [];
+  if (nodes.length < 3) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC81C\uBAA9\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  nodes[0].textContent = `${month.slice(0, 4)}\uB144`;
+  nodes[1].textContent = ` ${Number(month.slice(5))}\uC6D4 `;
+}
+function updateSummary(table, data) {
+  const tableRows = rows(table);
+  if (tableRows.length < 2 || cells(tableRows[1]).length !== 5) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uCD1D\uAD04\uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  setTableCellValues(tableRows[1], [
+    data.townshipCount,
+    data.campCount,
+    data.newCampCount,
+    `${data.programs.length}\uAC74 / ${data.programPeople.toLocaleString("ko-KR")}\uBA85`,
+    `${data.links.length}\uAC74 / ${data.linkagePeople.toLocaleString("ko-KR")}\uBA85`
+  ]);
+}
+function updatePrograms(table, data) {
+  const sourceRows = rows(table);
+  if (sourceRows.length < 3) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD504\uB85C\uADF8\uB7A8 \uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const header = sourceRows[0].cloneNode(true);
+  const rowPrototype = sourceRows[1];
+  const totalPrototype = sourceRows[sourceRows.length - 1];
+  const nextRows = [header];
+  for (const [index, item] of data.programs.entries()) {
+    const row = rowPrototype.cloneNode(true);
+    setTableCellValues(row, [text(item.center), text(item.program), text(item.content), integer(item.participants), programDate(item.date, data.month)]);
+    setRowAddress(row, index + 1);
+    nextRows.push(row);
+  }
+  const total = totalPrototype.cloneNode(true);
+  const totalCells = cells(total);
+  if (totalCells.length !== 2) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uD504\uB85C\uADF8\uB7A8 \uD569\uACC4 \uC904\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  setTableCellValues(total, ["\uD569   \uACC4", `${data.programs.length}\uAC74  /  ${data.programPeople.toLocaleString("ko-KR")}\uBA85`]);
+  setRowAddress(total, nextRows.length);
+  nextRows.push(total);
+  replaceRows(table, nextRows);
+}
+function makeLinkageTable(baseTable, totalPrototype, groups, appendTotal, data) {
+  const sourceRows = rows(baseTable);
+  if (sourceRows.length < 4) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC74D\uBA74\uB3D9\uBCC4 \uC5F0\uACC4 \uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const headerRows = [sourceRows[0].cloneNode(true), sourceRows[1].cloneNode(true)];
+  const nextRows = [...headerRows];
+  for (const [town, items] of groups) {
+    items.forEach((item) => {
+      const row = sourceRows[2].cloneNode(true);
+      const values = [town, text(item.recipientCategory), text(item.recipient), text(item.recipientAddress), supplierNames(item), text(item.providerAddress), linkageDate(item.date), linkagePeopleCell(item), text(item.activity), text(item.registered)];
+      setTableCellValues(row, values);
+      const townCellSize = cells(row)[0].getElementsByTagNameNS(HP, "cellSz").item(0);
+      const detailCellSize = cells(sourceRows[3])[0].getElementsByTagNameNS(HP, "cellSz").item(0);
+      if (townCellSize && detailCellSize) townCellSize.setAttribute("height", detailCellSize.getAttribute("height"));
+      setRowAddress(row, nextRows.length);
+      nextRows.push(row);
+    });
+  }
+  if (appendTotal) {
+    const total = totalPrototype.cloneNode(true);
+    const totalCells = cells(total);
+    if (totalCells.length !== 3) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC5F0\uACC4 \uD569\uACC4 \uC904\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+    setTableCellValues(total, ["\uD569\uACC4", `${data.links.length}\uAC74 / ${data.linkagePeople.toLocaleString("ko-KR")}\uBA85`, ""]);
+    setRowAddress(total, nextRows.length);
+    nextRows.push(total);
+  }
+  replaceRows(baseTable, nextRows);
+  return baseTable;
+}
+function updateLinkages(root, tables, data) {
+  if (tables.length < 4) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC74D\uBA74\uB3D9\uBCC4 \uC5F0\uACC4\uC2E4\uC801 \uD45C\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const linkHeading = Array.from(root.children).find(
+    (paragraph2) => paragraph2.namespaceURI === HP && paragraph2.localName === "p" && Array.from(paragraph2.getElementsByTagNameNS(HP, "t")).map((node) => node.textContent || "").join("").includes("\uC218\uC694\uACF5\uAE09 \uC5F0\uACC4\uC2E4\uC801")
+  );
+  if (!linkHeading) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC5F0\uACC4\uC2E4\uC801 \uC81C\uBAA9\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  linkHeading.setAttribute("pageBreak", "0");
+  const linkParagraphs = Array.from(root.children).filter((paragraph2) => {
+    if (paragraph2.namespaceURI !== HP || paragraph2.localName !== "p") return false;
+    const table2 = paragraph2.getElementsByTagNameNS(HP, "tbl").item(0);
+    return table2 && rowTexts(rows(table2)[0]).some((value) => /읍면/.test(value)) && rowTexts(rows(table2)[0]).some((value) => /수요자/.test(value));
+  });
+  if (linkParagraphs.length < 2) throw new Error("\uC6D0\uBCF8 \uC11C\uC2DD\uC758 \uC74D\uBA74\uB3D9 \uD45C \uD2C0\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const baseTable = linkParagraphs[0].getElementsByTagNameNS(HP, "tbl").item(0);
+  const totalTable = linkParagraphs[linkParagraphs.length - 1].getElementsByTagNameNS(HP, "tbl").item(0);
+  const totalPrototype = rows(totalTable).at(-1).cloneNode(true);
+  const insertionPoint = linkParagraphs[linkParagraphs.length - 1].nextSibling;
+  let nextTableId = Math.max(...tables.map((table2) => integer(table2.getAttribute("id")))) + 1;
+  for (const paragraph2 of linkParagraphs) root.removeChild(paragraph2);
+  const paragraph = linkParagraphs[0].cloneNode(true);
+  const table = paragraph.getElementsByTagNameNS(HP, "tbl").item(0);
+  table.setAttribute("id", String(nextTableId++));
+  makeLinkageTable(table, totalPrototype, data.groups, data.links.length > 0, data);
+  root.insertBefore(paragraph, insertionPoint);
+  const keptParagraphs = /* @__PURE__ */ new Set([linkHeading, paragraph]);
+  for (const child of Array.from(root.children)) {
+    if (child.namespaceURI === HP && child.localName === "p" && !keptParagraphs.has(child)) root.removeChild(child);
+  }
+}
+async function exportReport() {
+  const month = monthInput();
+  if (!/^20\d{2}-(0[1-9]|1[0-2])$/.test(month)) throw new Error("\uBA3C\uC800 \uC6B4\uC601\uD604\uD669 \uBCF4\uACE0 \uC6D4\uC744 \uC120\uD0DD\uD574 \uC8FC\uC138\uC694.");
+  const data = dataForMonth(month);
+  const response = await fetch(new URL("./center-operations-template.hwpx", import.meta.url));
+  if (!response.ok) throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669 \uC11C\uC2DD \uD30C\uC77C\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const source = new Uint8Array(await response.arrayBuffer());
+  const files = unzipSync(source);
+  const section = files["Contents/section0.xml"];
+  if (!section) throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669 \uBCF8\uBB38\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const xml = new DOMParser().parseFromString(strFromU8(section), "application/xml");
+  if (xml.querySelector("parsererror")) throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669 \uC11C\uC2DD\uC744 \uC77D\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  const root = xml.documentElement;
+  const tables = allTables(root);
+  if (tables.length < 4) throw new Error("\uC6D0\uBCF8 \uC6B4\uC601\uD604\uD669\uC758 \uD45C \uC11C\uC2DD\uC774 \uBD80\uC871\uD569\uB2C8\uB2E4.");
+  updateTitle(root, month);
+  updateSummary(tables[0], data);
+  updatePrograms(tables[1], data);
+  updateLinkages(root, tables, data);
+  files["Contents/section0.xml"] = strToU8(new XMLSerializer().serializeToString(xml));
+  files["Preview/PrvText.txt"] = strToU8(`${month} \uB17C\uC0B0\uC2DC \uC74D\uBA74\uB3D9\uBCC4 \uC218\uC694\uACF5\uAE09 \uC5F0\uACC4\uC2E4\uC801`);
+  const entries = Object.fromEntries(Object.entries(files).map(([name, bytes]) => [name, [bytes, { level: name === "mimetype" ? 0 : 6 }]]));
+  const archive = zipSync(entries);
+  const blob = new Blob([archive], { type: "application/haansofthwpx" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${month}_\uB17C\uC0B0\uC2DC_\uC218\uC694\uACF5\uAE09\uC5F0\uACC4\uC2E4\uC801.hwpx`;
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+document.addEventListener("click", (event) => {
+  const origin = event.target;
+  const button = origin instanceof Element ? origin.closest("button") : null;
+  if (!button || text(button.textContent) !== "\uAC70\uC810\uC6B4\uC601\uD604\uD669 \uD55C\uAE00\uD30C\uC77C\uC800\uC7A5") return;
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+  exportReport().catch((error) => {
+    console.error("\uD55C\uAE00 \uC6B4\uC601\uD604\uD669 \uB0B4\uBCF4\uB0B4\uAE30 \uC624\uB958:", error);
+    window.alert(error instanceof Error ? error.message : "\uD55C\uAE00 \uC6B4\uC601\uD604\uD669\uC744 \uB9CC\uB4E4\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+  });
+}, true);
