@@ -24,3 +24,15 @@
  .journal-identity-pane>.name-prompt{grid-row:3;margin:0}
  .journal-identity-pane:has(>.name-prompt)>.saved-journals{grid-row:4}
 }
+
+/* Narrow windows need content height, rather than desktop card-height matching. */
+@media (min-width:761px) and (max-width:1200px){
+ .journal-setup-grid .journal-identity-pane,.journal-setup-grid .journal-identity-pane:has(>.name-prompt){contain:none;align-self:start;grid-template-rows:none;grid-auto-rows:auto}
+ .journal-identity-pane>.file-first-upload,.journal-identity-pane>.toolbar,.journal-identity-pane>.saved-journals{height:auto;overflow:visible}
+ .journal-identity-pane>.file-first-upload{flex-direction:column;align-items:stretch}
+ .journal-identity-pane>.file-first-upload button{align-self:flex-start;max-width:100%}
+ .journal-identity-pane>.toolbar{align-content:flex-start;align-items:flex-end}
+}
+@media (min-width:761px) and (max-width:1000px){
+ .journal-identity-pane .saved-journal-selectors{flex-direction:column!important}
+}
