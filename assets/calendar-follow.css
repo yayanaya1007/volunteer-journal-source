@@ -43,3 +43,8 @@
  main .month-pane{top:calc(16px + var(--journal-notice-height,0px));max-height:calc(100vh - 32px - var(--journal-notice-height,0px) - var(--journal-calendar-bottom-space,0px));max-height:calc(100dvh - 32px - var(--journal-notice-height,0px) - var(--journal-calendar-bottom-space,0px))}
 }
 @media print{.journal-sticky-notice{position:static;max-height:none;overflow:visible;box-shadow:none}}
+
+/* Sentence tools stay collapsed until the user opens their heading. */
+details.sentence-builder>summary{cursor:pointer;color:#526b91;font-size:14px;font-weight:600;min-height:28px;padding:4px 0}
+details.sentence-builder[open]>summary{margin-bottom:8px}
+details.sentence-builder>summary:focus-visible{outline:2px solid #526b91;outline-offset:3px;border-radius:3px}
