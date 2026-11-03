@@ -1,4 +1,4 @@
-import {StickyJournalNotice} from './sticky-journal-notice.js?v=20261103-v1';
+import {StickyJournalNotice} from './sticky-journal-notice.js?v=20261103-v2';
 import {checkedActivityTypes,checkedActivityOther,hwpParagraphText,hwpxCheckboxText} from './journal-check-import.js?v=20261102-checks-v1';
 import {readJournalTripText,activityContentFromSection} from './journal-trip-import.js?v=20261101-trip-columns-v1';
 import {readPdfJournalLayout} from './pdf-journal-layout.js?v=20261101-trip-columns-v3';
