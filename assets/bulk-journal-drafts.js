@@ -13,14 +13,44 @@ export function setVillageHallName(value, name) {
   return selected.map(item => /마을회관$/.test(item) ? hallName : item).join(', ');
 }
 
+export function applyCommonActivityPlaces(placesByDate, dates, place) {
+  return { ...placesByDate, ...Object.fromEntries(dates.map(date => [date, place.trim()])) };
+}
+
+// Keep raw input separate from the normalized value so spaces survive each keystroke.
+function ActivityPlacePicker({ React, legend, value, onChange, options, prefix }) {
+  const h = React.createElement;
+  const parse = text => {
+    const values = text.split(',').map(item => item.trim()).filter(Boolean);
+    const hall = values.find(item => /마을회관$/.test(item));
+    return { fixed: values.filter(item => options.includes(item) && item !== '마을회관'), hallEnabled: Boolean(hall), hallName: hall ? hall.replace(/\s*마을회관$/, '') : '', custom: values.filter(item => !options.includes(item) && !/마을회관$/.test(item)).join(', ') };
+  };
+  const [draft, setDraft] = React.useState(() => parse(value));
+  const emitted = React.useRef(value);
+  React.useEffect(() => {
+    if (value !== emitted.current) { emitted.current = value; setDraft(parse(value)); }
+  }, [value, options.join('|')]);
+  const change = next => {
+    setDraft(next);
+    const parts = [...next.fixed, ...(next.hallEnabled ? [next.hallName.trim() ? `${next.hallName.trim()} 마을회관` : '마을회관'] : []), next.custom.trim()].filter(Boolean);
+    emitted.current = parts.join(', ');
+    onChange(emitted.current);
+  };
+  return h('fieldset', { className: 'bulk-place-picker' }, h('legend', null, legend),
+    h('div', { className: 'bulk-place-options' }, ...options.map(label => h('label', { key: label }, h('input', { type: 'checkbox', 'aria-label': `${prefix}${label} 활동장소`, checked: label === '마을회관' ? draft.hallEnabled : draft.fixed.includes(label), onChange: event => change(label === '마을회관' ? { ...draft, hallEnabled: event.target.checked } : { ...draft, fixed: event.target.checked ? [...draft.fixed, label] : draft.fixed.filter(item => item !== label) }) }), label))),
+    draft.hallEnabled && h('label', { className: 'bulk-field' }, h('span', null, `${prefix}마을회관 이름`), h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, h('input', { type: 'text', 'aria-label': `${prefix}마을회관 앞에 들어갈 마을 이름`, placeholder: '예: 신교리', value: draft.hallName, onChange: event => change({ ...draft, hallName: event.target.value }) }), h('span', { style: { whiteSpace: 'nowrap' } }, '마을회관'))),
+    h('label', { className: 'bulk-field' }, h('span', null, `${prefix}다른 장소 직접 입력`), h('input', { type: 'text', value: draft.custom, onChange: event => change({ ...draft, custom: event.target.value }) })),
+    !prefix && h('p', { className: 'bulk-help' }, '장소를 선택하거나 직접 입력한 뒤 ‘전체 적용하기’를 누르면 현재 선택한 날짜에 적용됩니다.'));
+}
+
 export function tripPhotoStatus(record, assets = []) {
   if (!record || !(record.types?.includes('출장') || record.trips?.length)) return '';
   return assets.some(asset => asset.kind === 'photo' && asset.date === record.date && asset.url) ? 'ready' : 'missing';
 }
 
-export function makeActivitySentence({ place = '', camp = '', counterpart = '', activityGroup = '', actionResult = '', actionSelections = [], phraseText = activityPhraseText(actionSelections) }) {
-  const location = place.trim() || camp;
-  return `${location}에서 ${counterpart.trim() ? `${counterpart.trim()}와 ` : ''}${activityGroup ? `${activityGroup}과 함께 ` : ''}${phraseText} 활동을 진행함${actionResult.trim() ? `. ${actionResult.trim()}` : '.'}`;
+export function makeActivitySentence({ place = '', camp = '', counterpart = '', activityGroup = '', actionResult = '', actionSelections = [], phraseText = activityPhraseText(actionSelections), useCampFallback = true }) {
+  const location = place.trim() || (useCampFallback ? camp : '');
+  return `${location || useCampFallback ? `${location}에서 ` : ''}${counterpart.trim() ? `${counterpart.trim()}와 ` : ''}${activityGroup ? `${activityGroup}과 함께 ` : ''}${phraseText} 활동을 진행함${actionResult.trim() ? `. ${actionResult.trim()}` : '.'}`;
 }
 
 function activityMetadata(label) {
@@ -219,7 +249,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
   const [start2, setStart2] = React.useState(''), [end2, setEnd2] = React.useState(''), [showSecondTime, setShowSecondTime] = React.useState(false);
   const [timesByDate, setTimesByDate] = React.useState({}), [tripsByDate, setTripsByDate] = React.useState({});
   const dialog = React.useRef(null), builderStarted = React.useRef(false);
-  const openBuilder = () => { setMessage(''); setPlan(null); if (!builderStarted.current) { setTripEnabled(false); setTripDates([]); setTimesByDate({}); setTripsByDate({}); setDatePlacesEnabled(false); setPlacesByDate({}); setActivities([]); setCommonActivities([]); setPlace(initialRecord?.place || ''); setCounterpart(initialRecord?.counterpart || ''); setActivityGroup(initialRecord?.activityGroup || ''); setActionResult(initialRecord?.actionResult || ''); builderStarted.current = true; } setOpen(true); };
+  const openBuilder = () => { setMessage(''); setPlan(null); if (!builderStarted.current) { setTripEnabled(false); setTripDates([]); setTimesByDate({}); setTripsByDate({}); setDatePlacesEnabled(false); setPlacesByDate({}); setActivities([]); setCommonActivities([]); setPlace(''); setCounterpart(initialRecord?.counterpart || ''); setActivityGroup(initialRecord?.activityGroup || ''); setActionResult(initialRecord?.actionResult || ''); builderStarted.current = true; } setOpen(true); };
   React.useEffect(() => { const handler = () => openBuilder(); window.addEventListener('volunteer-journal:bulk-open', handler); return () => window.removeEventListener('volunteer-journal:bulk-open', handler); }, [initialRecord, project.month, project.name, project.camp]);
   const allDates = monthDates(project.month), identity = `${project.month}|${project.name}|${project.camp}`;
   React.useEffect(() => { setDates([]); setPlan(null); setHistory([]); setMessage(''); setDatePlacesEnabled(false); setPlacesByDate({}); setTimesByDate({}); setTripsByDate({}); builderStarted.current = false; }, [identity]);
@@ -230,31 +260,21 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
   const eligible = allDates.filter(date => !occupied(date));
   const toggle = date => resetPlan(() => setDates(old => old.includes(date) ? old.filter(item => item !== date) : [...old, date].sort()));
   const placeOptions = activityPlaceOptions(project.camp, town);
-  const activePlacesByDate = datePlacesEnabled ? placesByDate : {};
-  const sentenceOptions = { autoGroupActivities: true, place, placesByDate: activePlacesByDate, camp: project.camp, counterpart, activityGroup, actionResult, commonActivities };
+  const activePlacesByDate = placesByDate;
+  const sentenceOptions = { autoGroupActivities: true, place: '', placesByDate: activePlacesByDate, camp: project.camp, useCampFallback: false, counterpart, activityGroup, actionResult, commonActivities };
   const distributedActivities = activityGroupsForSelection(activities.filter(label => !commonActivities.includes(label))); 
   const trip = { enabled: tripEnabled, dates: tripDates.filter(date => dates.includes(date)), start: tripStart, end: tripEnd, place: tripPlace, purpose: tripPurpose };
   const scheduleOptions = { start, end, start2, end2, showSecondTime, timesByDate, trip, tripsByDate };
   const selectedTripDates = dates.filter(date => tripForDate(scheduleOptions, date).enabled);
   const makePlan = () => { try { if (!dates.length) throw new Error('실제로 활동한 날짜를 선택해 주세요.'); validateDateSchedules(scheduleOptions, dates, containsTrip); setPlan(makeDraftPlan(dates, activities, sentenceOptions)); setMessage(''); } catch (error) { setMessage(error.message); } };
   const apply = () => { try {
-    const result = onApply(plan, { place, placesByDate: activePlacesByDate, ...scheduleOptions, counterpart, activityGroup, actionResult });
+    const result = onApply(plan, { place: '', placesByDate: activePlacesByDate, ...scheduleOptions, counterpart, activityGroup, actionResult });
     setHistory(result.history); setPlan(null); setDates([]); setOpen(false);
     setMessage(`${result.created}일의 초안을 넣었습니다.${result.skipped.length ? ` 기존 기록이 있는 ${result.skipped.length}일은 보존했습니다.` : ''} 내용을 확인한 뒤 작업 저장을 눌러 주세요.`);
   } catch (error) { setMessage(error.message); } };
   const restore = () => { const result = onUndo(history); setHistory([]); setMessage(`${result.restored}일의 초안을 되돌렸습니다.${result.kept ? ` 이후 수정한 ${result.kept}일은 보존했습니다.` : ''}`); };
   const field = (label, type, value, setter) => h('label', { className: 'bulk-field' }, h('span', null, label), h(type === 'time' ? WholeMinuteTimeInput : type === 'textarea' ? 'textarea' : 'input', { ...(type === 'time' ? { React } : {}), ...(type === 'textarea' ? { rows: 3 } : { type }), value, onChange: event => resetPlan(() => setter(event.target.value)) }));
-  const placePicker = (legend, value, setter, prefix) => {
-    const selected = value.split(',').map(item => item.trim()).filter(Boolean);
-    const isHall = item => /마을회관$/.test(item.trim());
-    const hall = selected.find(isHall);
-    const custom = value.split(',').filter(item => !placeOptions.includes(item.trim()) && !isHall(item)).join(',').replace(/^\s+/, '');
-    return h('fieldset', { className: 'bulk-place-picker' }, h('legend', null, legend),
-      h('div', { className: 'bulk-place-options' }, ...placeOptions.map(label => h('label', { key: label }, h('input', { type: 'checkbox', 'aria-label': `${prefix}${label} 활동장소`, checked: label === '마을회관' ? Boolean(hall) : selected.includes(label), onChange: event => { const checked = event.target.checked; resetPlan(() => setter(checked ? [...new Set([...selected, label])].join(', ') : selected.filter(item => label === '마을회관' ? !isHall(item) : item !== label).join(', '))); } }), label))),
-      hall && h('label', { className: 'bulk-field' }, h('span', null, `${prefix}마을회관 이름`), h('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } }, h('input', { type: 'text', 'aria-label': `${prefix}마을회관 앞에 들어갈 마을 이름`, placeholder: '예: 신교리', value: hall.replace(/\s*마을회관$/, ''), onChange: event => resetPlan(() => setter(setVillageHallName(value, event.target.value))) }), h('span', { style: { whiteSpace: 'nowrap' } }, '마을회관'))),
-      field(`${prefix}다른 장소 직접 입력`, 'text', custom, next => setter([...selected.filter(label => placeOptions.includes(label) || isHall(label)), next].filter(Boolean).join(', '))),
-      !prefix && h('p', { className: 'bulk-help' }, '거점을 바꾸면 해당 지역의 장소 선택칸이 나타납니다. 선택한 장소를 활동장소와 문장에 함께 넣습니다.'));
-  };
+  const placePicker = (legend, value, setter, prefix) => h(ActivityPlacePicker, { React, legend, value, options: placeOptions, prefix, onChange: next => resetPlan(() => setter(next)) });
   return h('div', { className: 'bulk-journal-launch' },
     h('button', { type: 'button', className: 'bulk-launch-button', disabled: disabled || !project.month || !project.name?.trim() || !project.camp?.trim(), onClick: openBuilder }, '여러 날짜 일지 만들기'),
     history.length > 0 && h('button', { type: 'button', className: 'bulk-undo-button', onClick: restore }, '방금 만든 초안 되돌리기'),
@@ -276,19 +296,18 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
           h(label === '출장' ? 'div' : 'label', { className: 'bulk-activity-common' + (label === '출장' ? ' bulk-trip-checkbox-label' : '') }, h('input', { type: 'checkbox', 'aria-label': `${label} 공통으로 넣기`, checked: commonActivities.includes(label), onChange: event => { const checked = event.target.checked; resetPlan(() => { setCommonActivities(old => checked ? [...old, label] : old.filter(item => item !== label)); if (checked) setActivities(old => old.includes(label) ? old : [...old, label]); }); } }), '공통')))),
         activities.length > 0 && h('div', { className: 'bulk-group-summary', role: 'status' }, h('strong', null, '자동으로 묶은 활동'), h('p', null, distributedActivities.length ? distributedActivities.map(group => group.label).join(' / ') : '공통 항목만 선택했습니다.'), commonActivities.length > 0 && h('small', null, `공통: ${activityPhraseText(commonActivities)}`)),
         h('h3', null, '3. 활동장소와 공통 정보 (선택)'),
-        placePicker('어디에서 활동했나요? · 기본 장소', place, setPlace, ''),
-        h('label', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', checked: datePlacesEnabled, onChange: event => resetPlan(() => setDatePlacesEnabled(event.target.checked)) }), '날짜별로 활동장소 다르게 선택'),
+        placePicker('공통장소 · 선택 후 전체 적용', place, setPlace, ''),
+        h('button', { type: 'button', className: 'bulk-schedule-reset', disabled: !dates.length || !place.trim(), onClick: () => resetPlan(() => { setPlacesByDate(old => applyCommonActivityPlaces(old, dates, place)); setDatePlacesEnabled(true); }) }, '전체 적용하기'),
+        h('label', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', checked: datePlacesEnabled, onChange: event => resetPlan(() => setDatePlacesEnabled(event.target.checked)) }), '날짜별 활동장소 확인·입력'),
         datePlacesEnabled && h('div', { className: 'bulk-date-places' },
-          h('p', { className: 'bulk-help' }, '장소가 다른 날짜는 ‘기본 장소 사용’을 해제하고 방문한 곳을 고르거나 직접 적어 주세요. 날짜마다 여러 장소를 선택할 수 있습니다.'),
+          h('p', { className: 'bulk-help' }, '날짜마다 장소를 고르거나 직접 입력하세요. 공통장소는 ‘전체 적용하기’를 눌렀을 때만 적용됩니다.'),
           dates.length ? dates.map(date => {
-            const inherited = !Object.prototype.hasOwnProperty.call(placesByDate, date);
             const label = `${Number(date.slice(5, 7))}월 ${Number(date.slice(-2))}일`;
             const value = draftPlaceForDate(sentenceOptions, date);
             const changePlace = next => setPlacesByDate(old => ({ ...old, [date]: next }));
             return h('section', { key: date, className: 'bulk-date-place-row', 'aria-label': `${label} 활동장소 설정` },
-              h('div', { className: 'bulk-date-place-heading' }, h('strong', null, label),
-                h('label', null, h('input', { type: 'checkbox', 'aria-label': `${label} 기본 장소 사용`, checked: inherited, onChange: event => { const checked = event.target.checked; resetPlan(() => setPlacesByDate(old => { const next = { ...old }; if (checked) delete next[date]; else next[date] = place; return next; })); } }), '기본 장소 사용')),
-              inherited ? h('p', { className: 'bulk-help' }, `기본 장소: ${place || '미입력'}`) : placePicker(`${label} 방문 장소`, value, changePlace, `${label} `));
+              h('div', { className: 'bulk-date-place-heading' }, h('strong', null, label)),
+              placePicker(`${label} 방문 장소`, value, changePlace, `${label} `));
           }) : h('p', { className: 'bulk-help' }, '먼저 위에서 활동 날짜를 선택해 주세요.')),
         h('div', { className: 'bulk-common' }, field('함께한 사람', 'text', counterpart, setCounterpart), field('활동 단체', 'text', activityGroup, setActivityGroup), field('결과·추가 내용', 'text', actionResult, setActionResult), field('공통 시작시간', 'time', start, setStart), field('공통 종료시간', 'time', end, setEnd)),
         h('div', { className: 'bulk-trip-toggle' }, h('input', { type: 'checkbox', 'aria-label': '공통 활동시간 두 구간 입력', checked: showSecondTime, onChange: event => resetPlan(() => { setShowSecondTime(event.target.checked); if (!event.target.checked) { setStart2(''); setEnd2(''); } }) }), '공통 활동시간 두 구간 입력'),
