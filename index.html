@@ -6,6 +6,12 @@
     <meta name="theme-color" content="#f4f7fb" />
     <meta name="description" content="PDF·HWP·HWPX 활동일지를 날짜별로 읽고 정리하는 자원봉사 일지 앱" />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./journal-manifest.json">
+    <link rel="apple-touch-icon" href="./journal-install/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="활동일지">
+    <link rel="stylesheet" href="./journal-install/install.css?v=20261103-1">
+    <script defer src="./journal-install/install.js?v=20261103-1"></script>
     <title>일지정리 · 자원봉사 활동 일지</title>
     <script type="module" crossorigin src="./assets/index-mobile-preview-20261009.js?v=20261103-photo-app-unlink-v1"></script>
     <script type="module" src="./assets/hwp-preview.js?v=20261031-source-return-v1"></script>
@@ -22,5 +28,14 @@
   </head>
   <body>
     <div id="root"></div>
+    <button id="install-journal-app" class="journal-install-button" type="button">활동일지 앱 설치</button>
+    <dialog id="journal-install-help" class="journal-install-help" aria-labelledby="journal-install-title">
+      <h2 id="journal-install-title">활동일지 설치</h2>
+      <p id="journal-install-status" role="status"></p>
+      <p>컴퓨터: Chrome 또는 Edge의 주소창 설치 아이콘이나 메뉴에서 ‘앱 설치’를 선택하세요.</p>
+      <p>아이폰·아이패드: Safari에서 이 페이지를 열고 ‘공유 → 홈 화면에 추가’를 선택하세요.</p>
+      <p>안드로이드: Chrome 메뉴의 ‘앱 설치’ 또는 ‘홈 화면에 추가’를 선택하세요.</p>
+      <button id="journal-install-close" type="button">닫기</button>
+    </dialog>
   </body>
 </html>
