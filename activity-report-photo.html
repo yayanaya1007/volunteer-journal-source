@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f1f2ee">
   <title>활동보고서사진</title>
+  <link rel="manifest" href="./activity-report-photo-manifest.json">
+  <link rel="icon" href="./photo-install/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="./photo-install/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="활동보고서사진">
+  <link rel="stylesheet" href="./photo-install/install.css?v=20261103-1">
+  <script defer src="./photo-install/install.js?v=20261103-1"></script>
   <style>
     *{box-sizing:border-box}body{margin:0;background:#f1f2ee;color:#26362b;font-family:Arial,"Malgun Gothic",sans-serif}.toolbar{height:72px;display:flex;align-items:center;gap:22px;padding:0 max(20px,calc((100vw - 1180px)/2));background:#fff;border-bottom:1px solid #e7e9e3}.brand{display:flex;align-items:center;gap:10px;margin-right:auto}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#315b48;color:#fff;font-size:17px;font-weight:700}.brand b,.brand small{display:block}.brand b{font-size:15px}.brand small{margin-top:4px;color:#849086;font-size:10px}.actions{display:flex;gap:8px}.btn{min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border:1px solid #dfe5dc;border-radius:8px;background:#fff;color:#48664f;font-size:12px;font-weight:650;cursor:pointer}.btn.primary{border-color:#315b48;background:#315b48;color:#fff}.settings{width:min(1120px,calc(100% - 40px));display:flex;align-items:end;gap:14px;margin:22px auto 12px;padding:16px 18px;border:1px solid #e4e7df;border-radius:12px;background:#fff}.settings-intro{display:grid;gap:5px;align-self:center;min-width:250px;margin-right:auto}.settings-intro b{font-size:12px}.settings-intro small{max-width:430px;color:#7e897e;font-size:10px;line-height:1.6}.settings label{display:grid;gap:6px;min-width:250px}.settings label span{font-size:10px;font-weight:650;color:#647266}.settings input{height:36px;padding:0 10px;border:1px solid #e3e7df;border-radius:7px;background:#fcfdfa;color:#314235;font:inherit;font-size:12px}.settings .date{min-width:155px}.message{width:min(1120px,calc(100% - 40px));margin:0 auto 8px;color:#53745a;font-size:11px}.canvas-wrap{display:flex;justify-content:center;overflow:auto;padding:12px 18px 20px}.page{width:210mm;min-width:210mm;height:297mm;padding:12mm 10mm 8mm;background:#fff;color:#111;box-shadow:0 5px 28px #28362a18}.page h1{height:13mm;margin:0 0 2.5mm;text-align:center;font-family:"함초롱바탕","함초롬바탕","HCR Batang",Batang,"바탕",serif;font-size:21pt;line-height:13mm;text-decoration:underline;text-underline-offset:2px}.frame{height:245mm;border:2px solid #111}.heading{height:14mm;display:grid;grid-template-columns:1.45fr 1fr;align-items:center;padding:0 4mm;border-bottom:1px solid #111;font-family:"나눔고딕","Nanum Gothic",sans-serif;font-size:12pt}.heading>div{display:flex;align-items:center;gap:2mm;min-width:0}.heading>div:first-child span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slots{height:calc(100% - 14mm);display:flex;flex-direction:column;align-items:center;gap:7mm;padding:0}.slot{position:relative;width:127mm;height:64mm;display:grid;place-items:center;overflow:hidden;border:1px solid #333;background:#fff}.slot:first-child{margin-top:7mm}.slot:nth-child(2){height:64mm}.slot.active:not(.filled){border-style:dashed;border-color:#78927c}.slot img{display:block;width:auto;height:64mm;max-width:100%;max-height:100%;object-fit:contain}.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#afb8ad}.empty span{font-size:12px}.empty small{color:#b4bbb2;font-size:9px}.slot-controls{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:5px;padding:5px 7px;background:#ffffffef}.slot-controls b{margin-right:auto;color:#52715a;font-size:9px}.slot-controls button{height:24px;padding:0 8px;border:1px solid #dce4d9;border-radius:5px;background:#fff;color:#4c6952;font-size:9px;cursor:pointer}.footer{width:min(1120px,calc(100% - 40px));display:flex;align-items:center;gap:15px;margin:0 auto 24px;color:#758176;font-size:10px}.reset{margin-left:auto;min-height:32px}.preview-bottom[hidden]{display:none}.preview-bottom{position:fixed;right:24px;bottom:20px;z-index:5;display:flex;gap:8px;padding:8px;border:1px solid #e3e7df;border-radius:12px;background:#ffffffed;box-shadow:0 5px 24px #26362416}.is-preview .settings,.is-preview .message,.is-preview .footer{display:none}.is-preview .slot.active:not(.filled){border-style:solid;border-color:#333}.is-preview .empty{display:none}
     @media(max-width:900px){.settings{flex-wrap:wrap;align-items:stretch}.settings-intro{width:100%}.settings label{flex:1;min-width:200px}.settings .date{min-width:155px}.toolbar{padding:0 14px;gap:10px}.actions{gap:5px}.btn{padding:0 9px;font-size:10px}.canvas-wrap{justify-content:flex-start}}
@@ -15,7 +22,7 @@
 <body>
   <header class="toolbar screen-only">
     <div class="brand"><span class="brand-mark">사</span><div><b>활동보고서사진</b><small>사진을 양식에 맞춰 넣고 인쇄해요</small></div></div>
-    <div class="actions"><button class="btn" id="preview">미리보기</button><button class="btn primary" id="print">인쇄 / PDF 저장</button></div>
+    <div class="actions"><button class="btn" id="install-photo-app" type="button">사진 앱 설치</button><button class="btn" id="preview">미리보기</button><button class="btn primary" id="print">인쇄 / PDF 저장</button></div>
   </header>
   <section class="settings screen-only">
     <div class="settings-intro"><b>사진 넣기</b><small>사진 칸을 선택한 뒤 Ctrl+V로 붙여넣거나 사진 선택을 누르세요. 사진 전체가 보이도록 비율을 유지해 맞춥니다.</small></div>
@@ -32,6 +39,14 @@
   </article></div>
   <footer class="footer screen-only"><span id="count">0/3장 입력 · 사진은 원본 비율을 유지합니다.</span><button class="btn reset" id="clear">사진 모두 지우기</button></footer>
   <div class="preview-bottom screen-only" id="preview-actions" hidden><button class="btn" id="back-to-edit">미리보기 닫기</button><button class="btn primary" id="print-preview">인쇄 / PDF 저장</button></div>
+  <dialog id="photo-install-help" class="photo-install-help screen-only" aria-labelledby="photo-install-title">
+    <h2 id="photo-install-title">활동보고서사진 설치</h2>
+    <p id="photo-install-status" role="status"></p>
+    <p>컴퓨터: Chrome 또는 Edge의 주소창 설치 아이콘이나 메뉴에서 ‘앱 설치’를 선택하세요.</p>
+    <p>아이폰·아이패드: Safari에서 이 페이지를 열고 ‘공유 → 홈 화면에 추가’를 선택하세요.</p>
+    <p>안드로이드: Chrome 메뉴의 ‘앱 설치’ 또는 ‘홈 화면에 추가’를 선택하세요.</p>
+    <button id="photo-install-close" class="btn" type="button">닫기</button>
+  </dialog>
   <script>
     (()=>{
       const slots=document.getElementById('slots'),activity=document.getElementById('activity'),date=document.getElementById('date'),printedActivity=document.getElementById('printed-activity'),printedDate=document.getElementById('printed-date'),message=document.getElementById('message'),count=document.getElementById('count');
