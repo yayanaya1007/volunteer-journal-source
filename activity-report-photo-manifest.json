@@ -1,0 +1,16 @@
+{
+  "id": "./activity-report-photo.html",
+  "name": "활동보고서사진",
+  "short_name": "활동보고서사진",
+  "description": "활동사진을 양식에 맞춰 넣고 인쇄하는 사진 앱",
+  "lang": "ko",
+  "start_url": "./activity-report-photo.html?launch=app",
+  "scope": "./activity-report-photo.html",
+  "display": "standalone",
+  "background_color": "#f1f2ee",
+  "theme_color": "#315b48",
+  "icons": [
+    { "src": "./photo-install/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./photo-install/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

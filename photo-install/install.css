@@ -1,0 +1,2 @@
+.photo-install-help{width:min(440px,calc(100vw - 32px));padding:24px;border:1px solid #d6e0d8;border-radius:14px;color:#26362b;background:#fff;box-shadow:0 16px 60px #162c2840}.photo-install-help::backdrop{background:#142c2780}.photo-install-help h2{margin:0 0 12px;font-size:20px}.photo-install-help p{font-size:14px;line-height:1.7}.photo-install-help .btn{margin-top:8px}.photo-install-help:focus-visible{outline:2px solid #315b48}
+.btn#install-photo-app[hidden]{display:none}
