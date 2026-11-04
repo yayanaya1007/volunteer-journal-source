@@ -1,4 +1,5 @@
 import initHwp, { HwpDocument } from './rhwp-VciUJEJo.js';
+import { openCachedSourceDocument } from './hwpx-source-layout.js?v=20261104-source-pages-v1';
 
 const states = new Map();
 let initPromise;
@@ -53,10 +54,11 @@ function readStoredFile(id) {
 
 globalThis.extractHwpEmbeddedMedia = async (bytes, pages) => {
   await initializeRenderer();
-  const doc = new HwpDocument(bytes);
+  const cachedDoc = openCachedSourceDocument(bytes, HwpDocument);
+  const doc = cachedDoc || new HwpDocument(bytes);
   try {
     const originalPageHeight = JSON.parse(doc.getPageDef(0)).height / 75;
-    correctRendererOverflow(doc);
+    if (!cachedDoc) correctRendererOverflow(doc);
     const pageCount = doc.pageCount();
     if (pageCount !== pages.length) return { pageCount, pages: [] };
     const pageHeight = originalPageHeight;
@@ -208,7 +210,8 @@ function mount(container) {
       const file = await readStoredFile(id);
       const bytes = new Uint8Array(await file.arrayBuffer());
       await initializeRenderer();
-      const doc = new HwpDocument(bytes);
+      const cachedDoc = openCachedSourceDocument(bytes, HwpDocument);
+      const doc = cachedDoc || new HwpDocument(bytes);
       if (state.cancelled) {
         doc.free();
         return;
@@ -219,7 +222,7 @@ function mount(container) {
         throw new Error('원본 문서의 쪽 수를 읽지 못했습니다.');
       }
       state.doc = doc;
-      correctRendererOverflow(doc);
+      if (!cachedDoc) correctRendererOverflow(doc);
       total = doc.pageCount();
       state.total = total;
       renderPage(state, Number(container.dataset.page) || page);
