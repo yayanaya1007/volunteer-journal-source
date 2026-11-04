@@ -1,5 +1,5 @@
 import {unzipSync, strFromU8} from './source-layout-zip.js';
-import {tripEntriesFromCells} from './journal-trip-import.js?v=20261104-trip-hour-only-v2';
+import {tripEntriesFromCells} from './journal-trip-import.js?v=20261104-trip-bare-hours-v3';
 
 export function matchImportedMediaRecord(records, media) {
   if (media.date) {
