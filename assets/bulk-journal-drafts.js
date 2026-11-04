@@ -1,4 +1,4 @@
-import {WholeMinuteTimeInput} from './whole-minute-time-input.js?v=20261031-time00-v1';
+import {WholeMinuteTimeInput} from './whole-minute-time-input.js?v=20261104-start0800-v2';
 import {activityGroupsForSelection, activityPhraseText} from './activity-word-groups.js?v=20261101-phrase-v1';
 // Both journal editors use the same word combinations.
 
@@ -260,7 +260,7 @@ export function undoBulkDrafts(project, history) {
 export function BulkJournalDraftButton({ React, project, onApply, onUndo, activityOptions, initialRecord, disabled, town = '', containsTrip }) {
   const h = React.createElement;
   const [open, setOpen] = React.useState(false), [dates, setDates] = React.useState([]), [activities, setActivities] = React.useState([]), [commonActivities, setCommonActivities] = React.useState([]);
-  const [counterpart, setCounterpart] = React.useState(''), [activityGroup, setActivityGroup] = React.useState(''), [actionResult, setActionResult] = React.useState(''), [place, setPlace] = React.useState(''), [start, setStart] = React.useState('09:00'), [end, setEnd] = React.useState('');
+  const [counterpart, setCounterpart] = React.useState(''), [activityGroup, setActivityGroup] = React.useState(''), [actionResult, setActionResult] = React.useState(''), [place, setPlace] = React.useState(''), [start, setStart] = React.useState('08:00'), [end, setEnd] = React.useState('');
   const [plan, setPlan] = React.useState(null), [message, setMessage] = React.useState(''), [history, setHistory] = React.useState([]);
   const [tripDates, setTripDates] = React.useState([]);
   const [datePlacesEnabled, setDatePlacesEnabled] = React.useState(false), [placesByDate, setPlacesByDate] = React.useState({});
@@ -339,7 +339,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
           h('p', { className: 'bulk-help' }, '위에서 선택한 활동 날짜 중 실제로 출장한 날만 체크하세요. 체크하지 않은 날에는 출장내역을 넣지 않습니다.'),
           dates.length ? h('div', { className: 'bulk-trip-date-list' }, ...dates.map(date => h('div', { key: date, className: 'bulk-trip-date-choice' }, h('input', { type: 'checkbox', 'aria-label': `${Number(date.slice(5, 7))}월 ${Number(date.slice(-2))}일 출장`, checked: tripForDate(scheduleOptions, date).enabled, onChange: event => { const checked = event.target.checked; resetPlan(() => { setTripDates(old => checked ? [...new Set([...old, date])].sort() : old.filter(item => item !== date)); setTripsByDate(old => ({ ...old, [date]: { ...(old[date] || {}), enabled: checked } })); }); } }), `${Number(date.slice(5, 7))}월 ${Number(date.slice(-2))}일`))) : h('p', { className: 'bulk-help' }, '먼저 위에서 활동 날짜를 선택해 주세요.'),
           h('div', { className: 'bulk-date-tools' }, h('button', { type: 'button', disabled: !dates.length, onClick: () => resetPlan(() => { setTripDates([...dates]); setTripsByDate(old => ({ ...old, ...Object.fromEntries(dates.map(date => [date, { ...(old[date] || {}), enabled: true }])) })); }) }, '출장 날짜 전체 체크'), h('button', { type: 'button', onClick: () => resetPlan(() => { setTripDates([]); setTripsByDate(old => ({ ...old, ...Object.fromEntries(dates.map(date => [date, { ...(old[date] || {}), enabled: false }])) })); }) }, '출장 날짜 체크 해제'))),
-        tripEnabled && h('div', { className: 'bulk-common bulk-trip-fields' }, field('출장 시작시간', 'time', tripStart, setTripStart), field('출장 종료시간', 'time', tripEnd, setTripEnd), field('출장지 / 수요처', 'text', tripPlace, setTripPlace), field('출장목적', 'textarea', tripPurpose, setTripPurpose)),
+        tripEnabled && h('div', { className: 'bulk-common bulk-trip-fields' }, field('출장 시작시간', 'time', tripStart, setTripStart), field('출장 종료시간', 'time', tripEnd, setTripEnd), field('출장지 / 수요처', 'textarea', tripPlace, setTripPlace), field('출장목적', 'textarea', tripPurpose, setTripPurpose)),
         tripEnabled && h('p', { className: 'bulk-help' }, '공통 출장시간은 아래 날짜별 출장시간의 기본값입니다. 날짜별로 직접 고친 값은 공통값을 바꾸거나 적용해도 유지합니다. 출장시간은 총 활동시간에 중복해서 더하지 않습니다.'),
         tripEnabled && h('div', { className: 'bulk-date-tools' }, h('button', { type: 'button', disabled: !selectedTripDates.length, onClick: () => resetPlan(() => setTripsByDate(old => applyCommonTripDefaults(old, selectedTripDates))) }, '출장 체크한 날짜에 공통 출장내역 적용')),
         h('h3', null, '4. 날짜별 활동시간과 출장'),
@@ -358,7 +358,7 @@ export function BulkJournalDraftButton({ React, project, onApply, onUndo, activi
             dayTrip.enabled && h('div', { className: 'bulk-day-trip-list' }, ...dayTrips.map((entry, index) => {
               const prefix = index ? `${label} 출장 ${index + 1}` : `${label} 출장`;
               return h('fieldset', { key: index, className: 'bulk-day-trip-entry' }, h('legend', null, `출장 ${index + 1}`),
-                h('div', { className: 'bulk-schedule-fields' }, ...[['start', '시작시간', 'time'], ['end', '종료시간', 'time'], ['place', '출장지', 'text'], ['purpose', '출장목적', 'textarea']].map(([key, title, type]) => field(`${prefix} ${title === '출장지' ? '방문 장소' : title === '출장목적' ? '목적' : title}`, type, entry[key], value => setTripsByDate(old => editTripEntry(old, date, index, key, value))))),
+                h('div', { className: 'bulk-schedule-fields' }, ...[['start', '시작시간', 'time'], ['end', '종료시간', 'time'], ['place', '출장지', 'textarea'], ['purpose', '출장목적', 'textarea']].map(([key, title, type]) => field(`${prefix} ${title === '출장지' ? '방문 장소' : title === '출장목적' ? '목적' : title}`, type, entry[key], value => setTripsByDate(old => editTripEntry(old, date, index, key, value))))),
                 dayTrips.length > 1 && h('button', { type: 'button', className: 'bulk-schedule-reset', 'aria-label': `${label} 출장 ${index + 1} 삭제`, onClick: () => resetPlan(() => setTripsByDate(old => removeTripEntry(old, date, index))) }, '삭제'));
             }), h('button', { type: 'button', className: 'bulk-schedule-reset', disabled: dayTrips.length >= 3, 'aria-label': `${label} 출장 추가`, onClick: () => resetPlan(() => setTripsByDate(old => addTripEntry(old, date))) }, '출장 추가')),
 

@@ -4,11 +4,11 @@ export function wholeMinuteValue(value, now = new Date()) {
 
 // Seed an empty native picker before it opens. Existing source/user times and
 // the ability to choose any other minute remain unchanged.
-export function WholeMinuteTimeInput({ React, ...props }) {
+export function WholeMinuteTimeInput({ React, defaultTime, ...props }) {
   const prepare = event => {
     const input = event.currentTarget;
     if (props.disabled || props.readOnly || props.value || input.value) return;
-    input.value = wholeMinuteValue('');
+    input.value = defaultTime || wholeMinuteValue('');
     props.onChange?.({ target: input, currentTarget: input });
   };
   return React.createElement('input', { ...props, type: 'time',
