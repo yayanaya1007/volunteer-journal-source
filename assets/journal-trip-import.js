@@ -1,7 +1,19 @@
-import {isDetailTimeCell,stripLeadingDetailTime} from './journal-activity-time-import.js?v=20261104-top-time-v1';
+import {isDetailTimeCell,stripLeadingDetailTime,readActivityTimeRanges} from './journal-activity-time-import.js?v=20261104-top-time-v1';
 const timeRange = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 export function tripTimeRanges(text) {
-  return [...String(text).matchAll(timeRange)].filter(m=>+m[1]<24&&+m[2]<60&&+m[3]<24&&+m[4]<60).map(m=>({start:m[1].padStart(2,'0')+':'+m[2],end:m[3].padStart(2,'0')+':'+m[4]}));
+  return readActivityTimeRanges(text);
+}
+function joinSplitTimeCells(values) {
+  const result=[];
+  for(let index=0;index<values.length;index++){
+    if(isDetailTimeCell(values[index])&&!tripTimeRanges(values[index]).length){
+      let end=index, value=values[index];
+      while(end+1<values.length&&isDetailTimeCell(values[end+1])&&!tripTimeRanges(value).length)value+='\n'+values[++end];
+      if(tripTimeRanges(value).length){result.push(value);index=end;continue;}
+    }
+    result.push(values[index]);
+  }
+  return result;
 }
 const lines = value => String(value).split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
 // Keep each original column in that column, even when row associations are
@@ -19,7 +31,7 @@ export function readJournalTripText(text) {
     if(!/^\d{1,2}$/.test(values[i]))continue;
     const row=[];
     while(i+1<values.length&&!/^\d{1,2}$/.test(values[i+1]))row.push(values[++i]);
-    const body=row.filter(x=>! /^(?:순번|출장시간|출장지\s*\/\s*수요처|출장목적|결과\s*및\s*증빙)$/.test(x.replace(/\s/g,'')));
+    const body=joinSplitTimeCells(row.filter(x=>! /^(?:순번|출장시간|출장지\s*\/\s*수요처|출장목적|결과\s*및\s*증빙)$/.test(x.replace(/\s/g,''))));
     const first=body.findIndex(x=>tripTimeRanges(x).length);
     if(first<0)continue;
     let end=first;while(end<body.length&&tripTimeRanges(body[end]).length)end++;

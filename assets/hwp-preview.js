@@ -1,4 +1,4 @@
-import {extractHwpxJournalMedia} from './journal-source-media.js?v=20261104-date-media-v1';
+import {extractHwpxJournalMedia} from './journal-source-media.js?v=20261104-date-media-v2';
 import initHwp, { HwpDocument } from './rhwp-VciUJEJo.js';
 import { openCachedSourceDocument } from './hwpx-source-layout.js?v=20261104-date-media-v2';
 

@@ -1,5 +1,5 @@
 import {readActivityTimeRanges} from './journal-activity-time-import.js?v=20261104-top-time-v1';
-import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261104-top-time-v1';
+import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261104-trip-hour-only-v2';
 const compact = value => value.replace(/\s/g, '');
 const range = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 const center = item => item.x + item.width / 2;
@@ -14,8 +14,26 @@ function lines(items) {
   return rows.sort((a,b)=>b.y-a.y).map(row=>row.items.sort((a,b)=>a.x-b.x).map(item=>item.str).join(' ').trim()).filter(Boolean).join('\n');
 }
 
+// Table rules use PDF coordinates, matching text transforms. Read only straight
+// vertical path bounds; glyph paths and unrecognized operator formats are ignored.
+export function pdfVerticalRules(operatorList, OPS) {
+  if (!operatorList || !OPS) return [];
+  const rules=[],stack=[];let matrix=[1,0,0,1,0,0];
+  for (let index=0;index<operatorList.fnArray.length;index++) {
+    const op=operatorList.fnArray[index],args=operatorList.argsArray[index];
+    if(op===OPS.save){stack.push([...matrix]);continue;}
+    if(op===OPS.restore){matrix=stack.pop()||[1,0,0,1,0,0];continue;}
+    if(op===OPS.transform){const [a,b,c,d,e,f]=matrix,[g,h,i,j,k,l]=args;matrix=[a*g+c*h,b*g+d*h,a*i+c*j,b*i+d*j,a*k+c*l+e,b*k+d*l+f];continue;}
+    if(op!==OPS.constructPath||args?.[2]?.length!==4)continue;
+    const [x1,y1,x2,y2]=args[2];if(Math.abs(x2-x1)>.5||Math.abs(y2-y1)<8)continue;
+    const [a,b,c,d,e,f]=matrix,from=[a*x1+c*y1+e,b*x1+d*y1+f],to=[a*x2+c*y2+e,b*x2+d*y2+f];
+    if(Math.abs(from[0]-to[0])<.5)rules.push({x:(from[0]+to[0])/2,minY:Math.min(from[1],to[1]),maxY:Math.max(from[1],to[1])});
+  }
+  return rules;
+}
+
 // A conservative path for the numbered journal table. Other layouts retain OCR.
-export function readPdfJournalLayout(rawItems) {
+export function readPdfJournalLayout(rawItems, verticalRules = []) {
   const items = rawItems.filter(item => item.str?.trim() && item.transform?.length >= 6).map(item => ({str:item.str.trim(),x:item.transform[4],y:item.transform[5],width:item.width||0,height:item.height||10,font:item.fontName}));
   const headings = ['기본현황','활동시간및유형','세부활동내용','활동실적','출장내역','특이사항','확인'].map((title,index)=>items.find(item=>new RegExp(`^${index+1}[.)]${title}`).test(compact(item.str))));
   if (headings.some(item=>!item)) return null;
@@ -70,15 +88,21 @@ export function readPdfJournalLayout(rawItems) {
   const tripHeaders=['순번','출장시간','출장지/수요처','출장목적','결과및증빙'].map(label=>tripArea.find(item=>compact(item.str)===label));
   const trips=[];
   if(tripHeaders.every(Boolean)){
-    const centers=tripHeaders.map(center),indices=tripArea.filter(item=>/^\d+$/.test(item.str)&&Math.abs(center(item)-centers[0])<18&&item.y<tripHeaders[0].y-5).sort((a,b)=>b.y-a.y);
+    const centers=tripHeaders.map(center),headerRules=verticalRules.filter(rule=>rule.minY<tripHeaders[0].y&&rule.maxY>tripHeaders[0].y).map(rule=>rule.x).sort((a,b)=>a-b);
+    const bounds=centers.map((x,column)=>{
+      const left=headerRules.filter(value=>value<x).at(-1),right=headerRules.find(value=>value>x);
+      return left!==undefined&&right!==undefined?[left,right]:[column?(centers[column-1]+x)/2:-Infinity,column<centers.length-1?(x+centers[column+1])/2:Infinity];
+    });
+    const inColumn=(item,column)=>center(item)>=bounds[column][0]&&center(item)<bounds[column][1];
+    const indices=tripArea.filter(item=>/^\d+$/.test(item.str)&&Math.abs(center(item)-centers[0])<18&&item.y<tripHeaders[0].y-5).sort((a,b)=>b.y-a.y);
     for(let index=0;index<indices.length;index++){
       const current=indices[index],top=index?(indices[index-1].y+current.y)/2:tripHeaders[0].y-5,bottom=index<indices.length-1?(current.y+indices[index+1].y)/2:headings[5].y+3;
-      const row=tripArea.filter(item=>item.y<top&&item.y>bottom),cells=centers.map((x,column)=>lines(row.filter(item=>item.x>=(column?centers[column-1]+(column===1?(x-centers[column-1])/2:(centers[column-1]-centers[column-2])/2):-Infinity)&&item.x<(column<centers.length-1?x+(column?x-centers[column-1]:centers[1]-x)/2:Infinity))));
-      const times=row.filter(item=>item.x>=centers[0]+(centers[1]-centers[0])/2&&item.x<centers[1]+(centers[1]-centers[0])/2).flatMap(item=>tripTimeRanges(item.str).map(time=>({...time,y:item.y}))).sort((a,b)=>b.y-a.y);
+      const row=tripArea.filter(item=>item.y<top&&item.y>bottom),cells=centers.map((x,column)=>lines(row.filter(item=>inColumn(item,column))));
+      const times=row.filter(item=>inColumn(item,1)).flatMap(item=>tripTimeRanges(item.str).map(time=>({...time,y:item.y}))).sort((a,b)=>b.y-a.y);
       if(times.length>1&&new Set(times.map(time=>time.y)).size===times.length){
         for(let number=0;number<times.length;number++){
           const time=times[number],above=number?(times[number-1].y+time.y)/2:top,below=number<times.length-1?(time.y+times[number+1].y)/2:bottom;
-          const value=column=>lines(row.filter(item=>item.y<=above&&item.y>below&&item.x>=centers[column-1]+(centers[column-1]-centers[column-2])/2&&item.x<centers[column]+(centers[column]-centers[column-1])/2));
+          const value=column=>lines(row.filter(item=>item.y<=above&&item.y>below&&inColumn(item,column)));
           trips.push({id:`source-trip-${trips.length+1}`,start:time.start,end:time.end,place:value(2),purpose:value(3)});
         }
       }else for(const trip of tripEntriesFromCells(cells[1],cells[2],cells[3]))trips.push({...trip,id:`source-trip-${trips.length+1}`});

@@ -1,4 +1,5 @@
 import {unzipSync, strFromU8} from './source-layout-zip.js';
+import {tripEntriesFromCells} from './journal-trip-import.js?v=20261104-trip-hour-only-v2';
 
 export function matchImportedMediaRecord(records, media) {
   if (media.date) {
@@ -10,6 +11,8 @@ export function matchImportedMediaRecord(records, media) {
 }
 
 const textOf = node => [...node.getElementsByTagNameNS('*', 't')].map(part => part.textContent || '').join(' ');
+const textWithBreaks = node => node.nodeType === 3 || node.nodeType === 4 ? node.nodeValue : node.localName === 'lineBreak' ? '\n' : [...node.childNodes].map(textWithBreaks).join('');
+const paragraphText = node => [...node.getElementsByTagNameNS('*', 't')].map(textWithBreaks).join(' ');
 const children = node => [...node.children];
 const dateOf = (text, fallbackYear) => {
   const field = text.match(/활\s*동\s*일\s*자\s*[:：]?([\s\S]{0,100})/)?.[1];
@@ -61,6 +64,21 @@ export function extractHwpxJournalMedia(bytes, records) {
           const date = dateOf(text, records[0].date?.slice(0, 4));
           currentDate = date; section = 'basic';
           if (date) matched++;
+        }
+        const rows=children(node).filter(part=>part.localName==='tr');
+        const cells=row=>children(row).filter(part=>part.localName==='tc');
+        const header=rows[0]&&cells(rows[0]).map(cell=>textOf(cell).replace(/\s/g,''));
+        if(header?.length===5&&header[0]==='순번'&&header[1]==='출장시간'&&header[3]==='출장목적'){
+          const index=byDate.get(currentDate);
+          if(index!==undefined){
+            const cellText=cell=>[...cell.getElementsByTagNameNS('*','p')].map(paragraphText).filter(Boolean).join('\n').trim();
+            pages[index].trips??=[];
+            for(const row of rows.slice(1)){
+              const columns=cells(row);if(columns.length<4)continue;
+              pages[index].trips.push(...tripEntriesFromCells(cellText(columns[1]),cellText(columns[2]),cellText(columns[3])));
+            }
+            pages[index].trips=pages[index].trips.map((trip,number)=>({...trip,id:`source-trip-${number+1}`}));
+          }
         }
       }
       if (node.localName === 'pic') {
