@@ -37,7 +37,7 @@
   document.getElementById('journal-install-close').addEventListener('click', () => help.close());
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./journal-install-sw.js', {
-      scope: './', updateViaCache: 'none'
+      scope: './index.html', updateViaCache: 'none'
     }).catch(() => { /* Browser menu installation remains available. */ });
   }
 })();
