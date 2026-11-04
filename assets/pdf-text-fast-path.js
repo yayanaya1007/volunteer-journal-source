@@ -2,6 +2,9 @@
 // Missing/garbled fields and scans still use the existing OCR pipeline.
 export function pdfTextNeedsOcr(text, date, record) {
   if (!date || !text || /[\uFFFD\u0000]/.test(text)) return true;
+  // A fully identified digital table may legitimately have an empty details
+  // cell. Re-running OCR on it adds minutes without supplying missing content.
+  if (record?.sourceLayoutTrusted && record.start && record.end && record.totalMinutes != null) return false;
   const compact = text.replace(/\s/g, '');
   if (compact.length >= 500) return false; // Existing text-only behavior.
   if (!record?.start || !record?.end || record.totalMinutes == null || !record.details?.trim()) return true;

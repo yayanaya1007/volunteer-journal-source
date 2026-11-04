@@ -87,5 +87,5 @@ export function readPdfJournalLayout(rawItems) {
   const notes=lines(notesArea.filter(item=>!/^특이사항\s*\/\s*건의사항$/.test(item.str)&&!/^\s*[•·]\s*$/.test(item.str)));
   const text=[`거점캠프명: ${camp}`,`활동가 성명: ${name}`,`활동일자: ${dateText}`,`활동장소: ${place}`,'활동시간',timeText,'총 활동시간',totalText,'활동유형',...types,'세부활동내용',details,'활동실적','출장내역','특이사항',notes,'확인',lines(section(6))].join('\n');
   const typeOther=types.find(value=>value.startsWith('☑ 기타'))?.match(/[（(]([\s\S]*?)[）)]/)?.[1]?.trim()||'';
-  return {text,name,camp,category,counts,trips,typeOther,fields:{...timeRanges[0],timeRanges,breakMinutes:0,totalMinutes,details,place,notes,conflict:false}};
+  return {text,name,camp,category,counts,trips,typeOther,fields:{...timeRanges[0],timeRanges,breakMinutes:0,totalMinutes,details,place,notes,conflict:false,sourceLayoutTrusted:types.length===9&&types.every(value=>/^[☑□]/.test(value))}};
 }

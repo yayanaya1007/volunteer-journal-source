@@ -1,12 +1,22 @@
 // A whole-month signature is used only after an explicit user action.
 export function journalSignatureForDate(assets, date) {
   const common = assets.find(asset => asset.kind === 'signature' && asset.url);
-  if (common?.applyToAllDates) return common;
-  return assets.find(asset => asset.kind === 'source-signature' && asset.date === date && asset.url) || common;
+  const chosen = common?.applyToAllDates ? common : assets.find(asset => asset.kind === 'source-signature' && asset.date === date && asset.url) || common;
+  return chosen?.excludedDates?.includes(date) ? undefined : chosen;
 }
 
 export function withSharedJournalSignature(project, asset) {
-  return { ...project, assets: [...project.assets.filter(item => item.kind !== 'signature'), { ...asset, kind: 'signature', date: '', tripId: '', applyToAllDates: true }] };
+  return { ...project, records: project.records?.some(record => record.signatureDeleted) ? project.records.map(record => record.signatureDeleted ? {...record, signatureDeleted: false} : record) : project.records, assets: [...project.assets.filter(item => item.kind !== 'signature').map(item => {
+    if (item.kind !== 'source-signature' || !item.excludedDates) return item;
+    const {excludedDates, ...rest} = item; return rest;
+  }), { ...asset, kind: 'signature', date: '', tripId: '', applyToAllDates: true, excludedDates: [] }] };
+}
+
+export function withoutJournalSignatureForDate(project, date) {
+  return {...project, records: project.records.map(record => record.date === date ? {...record, signatureDeleted: true, reviewed: false} : record), assets: project.assets.map(asset => {
+    if (asset.kind !== 'signature' && !(asset.kind === 'source-signature' && asset.date === date)) return asset;
+    return {...asset, excludedDates: [...new Set([...(asset.excludedDates || []), date])]};
+  })};
 }
 
 export function SharedJournalSignatureControls({ React, assets, date, busy, onApply, ImageComponent }) {

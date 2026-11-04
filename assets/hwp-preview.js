@@ -1,5 +1,6 @@
+import {extractHwpxJournalMedia} from './journal-source-media.js?v=20261104-date-media-v1';
 import initHwp, { HwpDocument } from './rhwp-VciUJEJo.js';
-import { openCachedSourceDocument } from './hwpx-source-layout.js?v=20261104-source-pages-v1';
+import { openCachedSourceDocument } from './hwpx-source-layout.js?v=20261104-date-media-v2';
 
 const states = new Map();
 let initPromise;
@@ -53,10 +54,16 @@ function readStoredFile(id) {
 }
 
 globalThis.extractHwpEmbeddedMedia = async (bytes, pages) => {
+  const sourceMedia = extractHwpxJournalMedia(bytes, pages);
+  if (sourceMedia) return sourceMedia;
   await initializeRenderer();
   const cachedDoc = openCachedSourceDocument(bytes, HwpDocument);
   const doc = cachedDoc || new HwpDocument(bytes);
   try {
+    if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) {
+      const sourceMedia = extractHwpxJournalMedia(doc.exportHwpx(), pages);
+      if (sourceMedia) return sourceMedia;
+    }
     const originalPageHeight = JSON.parse(doc.getPageDef(0)).height / 75;
     if (!cachedDoc) correctRendererOverflow(doc);
     const pageCount = doc.pageCount();
@@ -91,7 +98,7 @@ globalThis.extractHwpEmbeddedMedia = async (bytes, pages) => {
         const signatureAspect = bitmap.width / Math.max(1, bitmap.height);
         const isSignature = signatureText && image.bbox.y > pageHeight * 0.80 && image.bbox.width < 260 && image.bbox.height < 120 && bitmap.width <= 1200 && bitmap.height <= 500 && signatureAspect >= 1.2;
         if (isSignature) result.signature = blob;
-        else if (bitmap.width >= 80 && bitmap.height >= 80 && bitmap.width * bitmap.height <= 20000000) result.photos.push(blob);
+        else if (bitmap.width >= 80 && bitmap.height >= 80) result.photos.push(blob);
         bitmap.close();
       }
       extracted.push(result);

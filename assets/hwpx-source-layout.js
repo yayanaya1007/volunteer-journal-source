@@ -1,5 +1,25 @@
 import { unzipSync, zipSync, strFromU8, strToU8 } from './source-layout-zip.js';
 
+// Text extraction must use all cached source pages, rather than treating a
+// document with one manual page break as if it had only two physical pages.
+export function withCachedHwpxPageBreaks(text) {
+  const xml = new DOMParser().parseFromString(text, 'application/xml');
+  if (xml.getElementsByTagNameNS('*', 'parsererror').length) return text;
+  const paragraphs = [...xml.documentElement.children].filter(node => node.localName === 'p');
+  let previous = -1, changed = false;
+  for (const paragraph of paragraphs) {
+    const lines = [...paragraph.children].find(node => node.localName === 'linesegarray');
+    if (!lines?.children.length) return text;
+    const positions = [...lines.children].map(line => line.hasAttribute('vertpos') ? Number(line.getAttribute('vertpos')) : NaN);
+    if (positions.some((value, index) => !Number.isFinite(value) || index && value < positions[index - 1])) return text;
+    if (previous >= 0 && positions[0] < previous && paragraph.getAttribute('pageBreak') !== '1') {
+      paragraph.setAttribute('pageBreak', '1'); changed = true;
+    }
+    previous = positions.at(-1);
+  }
+  return changed ? new XMLSerializer().serializeToString(xml) : text;
+}
+
 // This is a renderer-only copy. Stored/downloaded source bytes and page margins
 // are never changed. Floating tables with cached positions must not push the
 // following paragraphs forward a second time during browser pagination.
