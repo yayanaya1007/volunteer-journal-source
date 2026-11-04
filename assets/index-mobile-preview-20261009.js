@@ -1,10 +1,11 @@
+import {readActivityTimeSection} from './journal-activity-time-import.js?v=20261104-top-time-v1';
 import {findSavedJournalProjectJson} from './journal-project-storage.js?v=20261104-v1';
 import {planJournalRecordImport,keepJournalImportAsset,chooseJournalImportMode} from './journal-import-merge.js?v=20261103-v1';
 import {compressJournalPhoto} from './journal-photo-compression.js?v=20261103-v1';
 import {StickyJournalNotice} from './sticky-journal-notice.js?v=20261103-v2';
 import {checkedActivityTypes,checkedActivityOther,hwpParagraphText,hwpxCheckboxText} from './journal-check-import.js?v=20261102-checks-v1';
-import {readJournalTripText,activityContentFromSection} from './journal-trip-import.js?v=20261101-trip-columns-v1';
-import {readPdfJournalLayout} from './pdf-journal-layout.js?v=20261101-trip-columns-v3';
+import {readJournalTripText,activityContentFromSection} from './journal-trip-import.js?v=20261104-top-time-v1';
+import {readPdfJournalLayout} from './pdf-journal-layout.js?v=20261104-top-time-v1';
 import {projectForPdfSource} from './pdf-journal-export.js?v=20261031-pdf-export-v1';
 import {pdfTextNeedsOcr,pdfPageConcurrency,readPdfPages,resolvePdfImageObject} from './pdf-text-fast-path.js?v=20261031-pdf-fast-v3';
 import {BulkClearJournalButton,CalendarClearTools,clearJournalDates,restoreClearedJournalDates} from './bulk-clear-journal.js?v=20261103-calendar-mode-v4';
@@ -247,8 +248,8 @@ __HWP_PAGE_BREAK__
 }
 function Vh(e){
  e=e.replace(/氠瑢/g,'');
- const format=(e,t)=>String(e).padStart(2,'0')+':'+t,timeSection=e.match(/(?:^|\n)\s*(?:\d+[.)]\s*)?활동\s*시간(?:\s*및\s*유형)?\s*\n([\s\S]*?)(?=\n\s*총\s*활동\s*시간)/)?.[1]||e,times=[...timeSection.matchAll(new RegExp(Rh.source,'g'))].filter(e=>+e[1]<24&&+e[2]<60&&+e[3]<24&&+e[4]<60),timeRanges=times.map(e=>({start:format(e[1],e[2]),end:format(e[3],e[4])})),first=timeRanges[0],start=first?.start||'',end=first?.end||'';
- const explicitStart=e.match(/시작\s*시간[^\d]*(\d{1,2}:\d{2})/)?.[1]||'',explicitEnd=e.match(/종료\s*시간[^\d]*(\d{1,2}:\d{2})/)?.[1]||'',conflict=!!(first&&((explicitStart&&explicitStart!==start)||(explicitEnd&&explicitEnd!==end))),breakMinutes=Number(e.match(/휴게\s*시간[^\d]*(\d{1,4})\s*분/)?.[1]||0),totalMatch=e.match(/총\s*활동\s*시간[\s\S]{0,35}?(\d{1,3})\s*시간(?:[\s\S]{0,12}?(\d{1,2})\s*분)?/),totalMinutes=totalMatch?Number(totalMatch[1])*60+Number(totalMatch[2]||0):null;
+ const {text:timeSection,timeRanges}=readActivityTimeSection(e),first=timeRanges[0],start=first?.start||'',end=first?.end||'';
+ const explicitStart=timeSection.match(/시작\s*시간[^\d]*(\d{1,2}:\d{2})/)?.[1]||'',explicitEnd=timeSection.match(/종료\s*시간[^\d]*(\d{1,2}:\d{2})/)?.[1]||'',conflict=!!(first&&((explicitStart&&explicitStart!==start)||(explicitEnd&&explicitEnd!==end))),breakMinutes=Number(e.match(/휴게\s*시간[^\d]*(\d{1,4})\s*분/)?.[1]||0),totalMatch=e.match(/총\s*활동\s*시간[\s\S]{0,35}?(\d{1,3})\s*시간(?:[\s\S]{0,12}?(\d{1,2})\s*분)?/),totalMinutes=totalMatch?Number(totalMatch[1])*60+Number(totalMatch[2]||0):null;
  const s=e.replace(/세\s*부\s*활\s*동\s*내\s*용/g,'세부활동내용').replace(/주\s*요\s*업\s*무/g,'주요업무'),detail=s.match(/(?:세부활동내용|(?:^|\n)[ \t]*활\s*동\s*내\s*용)[ \t]*[:：]?[ \t]*\n([\s\S]*?)(?=(?:\d[.\s]*)?(?:활동실적|출장내역|특이사항|확인사항|활동사진)|$)/)?.[1]||s.match(/세부활동내용\s*[:：]?([\s\S]*?)(?=(?:\d[.\s]*)?(?:활동실적|출장내역|특이사항|확인사항|활동사진)|$)/)?.[1],contents=[],activityContentOnly=activityContentFromSection;
  if(detail!==void 0)contents.push(activityContentOnly(detail));else for(const m of s.matchAll(/(?:^|\n)[ \t·•○ㅇ\-]*(?:내용|활동\s*내용)[ \t]*[:：][ \t]*([^\n]*(?:\n(?!\s*(?:[·•○ㅇ\-]*\s*)?(?:시간|장소|단체|내용|실적입력|홍보|수요처|기\s*타|활동사진|주요업무|특이사항))[^\n]*)*)/g))contents.push(m[1]);
  let details=contents.map(value=>value.trim()).filter(Boolean).join('\n\n');
@@ -307,10 +308,6 @@ function ag(e,t,n){
  if(new Set(activityDateValues).size>1||(e.date&&date&&e.date!==date))i.warnings.push('원본의 위·아래 활동 날짜가 서로 다릅니다. 활동일자를 원본과 대조해 주세요.');
  if(fields.conflict)i.warnings.push('원본에 서로 다른 시간이 있습니다. 시간칸을 원본과 대조해 주세요.');
  if(fields.totalMinutes!==null&&i.totalMinutes!==null&&fields.totalMinutes!==i.totalMinutes)i.warnings.push('원본에 적힌 총 활동시간과 활동시간을 계산한 값이 다릅니다. 활동시간과 총 활동시간을 원본과 대조해 주세요.');
- const detailSection=e.text.match(/세\s*부\s*활\s*동\s*내\s*용([\s\S]*?)(?=(?:\d[.\s]*)?활동실적|$)/)?.[1]||'';
- const detailRanges=[...detailSection.matchAll(new RegExp(Rh.source,'g'))].filter(match=>+match[1]<24&&+match[2]<60&&+match[3]<24&&+match[4]<60).map(match=>({start:String(+match[1]).padStart(2,'0')+':'+match[2],end:String(+match[3]).padStart(2,'0')+':'+match[4]}));
- const timeList=ranges=>ranges.map(range=>range.start+'-'+range.end).sort().join('|');
- if(fields.timeRanges?.length&&detailRanges.length&&timeList(fields.timeRanges)!==timeList(detailRanges))i.warnings.push('활동시간과 세부 활동내용에 적힌 시간이 서로 다릅니다. 두 시간 칸을 원본과 대조해 주세요.');
  if(i.trips.some(trip=>trip.start&&trip.end&&!tripWithinActivityRanges(i,trip)))i.warnings.push('출장시간이 활동시간 범위를 벗어납니다. 출장시간과 활동시간을 원본과 대조해 주세요.');
  return i
 }

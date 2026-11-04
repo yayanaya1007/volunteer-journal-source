@@ -1,3 +1,4 @@
+import {isDetailTimeCell,stripLeadingDetailTime} from './journal-activity-time-import.js?v=20261104-top-time-v1';
 const timeRange = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 export function tripTimeRanges(text) {
   return [...String(text).matchAll(timeRange)].filter(m=>+m[1]<24&&+m[2]<60&&+m[3]<24&&+m[4]<60).map(m=>({start:m[1].padStart(2,'0')+':'+m[2],end:m[3].padStart(2,'0')+':'+m[4]}));
@@ -51,13 +52,16 @@ export function activityContentFromSection(value) {
   const categories=['거점운영','거점상담','상담','홍보','모집','홍보·모집','수요처 발굴','발굴','연계·배치','연계','관리','실적관리','운영','프로그램 운영','회의·교육','교육','출장','기타','프로그램운영'];
   const output=[];let categoryDue=false;
   for(const line of body){
-    const times=tripTimeRanges(line);
-    const remaining=line.replace(timeRange,'').replace(/[\s,，~～∼〜–－-]/g,'');
-    if(times.length&&!remaining){categoryDue=columns.includes('구분');continue;}
+    if(isDetailTimeCell(line)){categoryDue=columns.includes('구분');continue;}
     if(categoryDue&&categories.some(label=>compact(label)===compact(line).replace(/[,，;；]$/,''))){categoryDue=false;continue;}
     categoryDue=false;
     // Two-column rows may keep the time and content on the same text line.
-    output.push(columns.length===2&&times.length?line.replace(timeRange,'').trim():line);
+    let content=stripLeadingDetailTime(line);
+    if(content!==line&&columns.includes('구분')){
+      const category=[...categories].sort((a,b)=>b.length-a.length).find(label=>content===label||content.startsWith(label+' '));
+      if(category)content=content.slice(category.length).trim();
+    }
+    output.push(content);
   }
   return output.filter(Boolean).join('\n').trim();
 }

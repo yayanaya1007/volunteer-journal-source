@@ -1,4 +1,5 @@
-import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261101-trip-columns-v1';
+import {readActivityTimeRanges} from './journal-activity-time-import.js?v=20261104-top-time-v1';
+import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261104-top-time-v1';
 const compact = value => value.replace(/\s/g, '');
 const range = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 const center = item => item.x + item.width / 2;
@@ -34,7 +35,7 @@ export function readPdfJournalLayout(rawItems) {
   const detailTime=detail.find(item=>compact(item.str)==='시간'),categoryLabel=detail.find(item=>compact(item.str)==='구분'),contentLabel=detail.find(item=>compact(item.str)==='활동내용');
   if (!camp || !name || !dateText || !timeLabel || !totalLabel || !detailTime || !categoryLabel || !contentLabel) return null;
   const timeText=lines(activity.filter(item=>item.x>=timeLabel.x+timeLabel.width-1 && item.x<totalLabel.x-2 && Math.abs(item.y-timeLabel.y)<22));
-  const timeRanges=[...timeText.matchAll(range)].map(match=>({start:`${match[1].padStart(2,'0')}:${match[2]}`,end:`${match[3].padStart(2,'0')}:${match[4]}`}));
+  const timeRanges=readActivityTimeRanges(timeText);
   if (!timeRanges.length) return null;
   const totalText=lines(activity.filter(item=>item.x>=totalLabel.x+totalLabel.width-1 && Math.abs(item.y-totalLabel.y)<16));
   const total=totalText.match(/(\d+)\s*시간(?:\s*(\d+)\s*분)?/),totalMinutes=total?Number(total[1])*60+Number(total[2]||0):null;
