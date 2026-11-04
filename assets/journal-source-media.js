@@ -13,6 +13,7 @@ export function matchImportedMediaRecord(records, media) {
 const textOf = node => [...node.getElementsByTagNameNS('*', 't')].map(part => part.textContent || '').join(' ');
 const textWithBreaks = node => node.nodeType === 3 || node.nodeType === 4 ? node.nodeValue : node.localName === 'lineBreak' ? '\n' : [...node.childNodes].map(textWithBreaks).join('');
 const paragraphText = node => [...node.getElementsByTagNameNS('*', 't')].map(textWithBreaks).join(' ');
+const cellParagraphText = cell => [...cell.getElementsByTagNameNS('*','p')].map(paragraphText).filter(Boolean).join('\n').trim();
 const children = node => [...node.children];
 const dateOf = (text, fallbackYear) => {
   const field = text.match(/활\s*동\s*일\s*자\s*[:：]?([\s\S]{0,100})/)?.[1];
@@ -68,6 +69,19 @@ export function extractHwpxJournalMedia(bytes, records) {
         const rows=children(node).filter(part=>part.localName==='tr');
         const cells=row=>children(row).filter(part=>part.localName==='tc');
         const header=rows[0]&&cells(rows[0]).map(cell=>textOf(cell).replace(/\s/g,''));
+        if(header?.length===3&&header[0]==='시간'&&header[1]==='구분'&&header[2]==='활동내용'){
+          const index=byDate.get(currentDate);
+          if(index!==undefined&&rows.slice(1).every(row=>cells(row).length===3)){
+            const categories=[],contents=[];
+            for(const row of rows.slice(1)){
+              const columns=cells(row);if(columns.length!==3)continue;
+              const category=cellParagraphText(columns[1]),content=cellParagraphText(columns[2]);
+              if(category)categories.push(category);if(content)contents.push(content);
+            }
+            pages[index].category=categories.join('\n').split(/[\n,/]+/).map(value=>value.trim()).filter(Boolean).join(', ');
+            pages[index].detailText=contents.join('\n');
+          }
+        }
         if(header?.length===5&&header[0]==='순번'&&header[1]==='출장시간'&&header[3]==='출장목적'){
           const index=byDate.get(currentDate);
           if(index!==undefined){
