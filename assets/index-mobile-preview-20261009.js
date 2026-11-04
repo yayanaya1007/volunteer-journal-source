@@ -73,7 +73,7 @@ if(xml.querySelector('parsererror'))throw Error('출근부 서식 파일을 읽�
 let table=oh(xml,'tbl')[0];
 if(!table)throw Error('출근부 서식의 표를 찾지 못했습니다.');
 let pagePr=oh(xml,'pagePr')[0],pageMargin=pagePr&&oh(pagePr,'margin')[0];if(pagePr){pagePr.setAttribute('landscape','NARROWLY');pagePr.setAttribute('width','59528');pagePr.setAttribute('height','84186');}if(pageMargin)for(let [key,value] of Object.entries({top:5669,left:8504,right:2835,bottom:0,header:0,footer:1417,gutter:0}))pageMargin.setAttribute(key,String(value));
-let timeSectionHeight=4110;
+let timeSectionHeight=4110,attendanceBandHeight=grid=>grid.length>=5?timeSectionHeight:grid.length===3?5074:4799;
 let month=e.month,year=+month.slice(0,4),monthNumber=+month.slice(5),daysInMonth=new Date(year,monthNumber,0).getDate(),
 records=e.records.filter(x=>x.date.startsWith(month+'-')&&x.name.trim()===e.name.trim()),
 names=[...new Set(records.map(x=>x.name.trim()).filter(Boolean))];
@@ -127,7 +127,7 @@ compactCell(cell,height,count>=3?tightTimeParaId:'23');
 if(entry){fillCellLines(cell,[entry.start+'~',entry.end||'']);oh(cell,'run').forEach(run=>run.setAttribute('charPrIDRef',timeCharId(count)));}
 },
 insertTimeRows=(rowIndex,firstDay,gridUnits,entriesFor)=>{
-let rows=Array.from(table.children).filter(x=>x.localName==='tr'),firstRow=rows[rowIndex],gridRows=gridUnits.length-1,splitGridIndices=[];
+let sectionHeight=attendanceBandHeight(gridUnits),rows=Array.from(table.children).filter(x=>x.localName==='tr'),firstRow=rows[rowIndex],gridRows=gridUnits.length-1,splitGridIndices=[];
 if(!firstRow)throw Error('시간 입력 칸을 찾지 못했습니다.');
 let templateRow=firstRow.cloneNode(true),originalCells=Array.from(firstRow.children).filter(x=>x.localName==='tc');
 for(let gridIndex=1;gridIndex<gridRows;gridIndex++){
@@ -137,10 +137,10 @@ if(hasEntryStart)splitGridIndices.push(gridIndex);
 let physicalBoundary=gridIndex=>gridIndex===0?0:1+splitGridIndices.filter(index=>index<gridIndex).length,physicalRowCount=1+splitGridIndices.length;
 for(let cell of originalCells){
 let col=Number(oh(cell,'cellAddr')[0]?.getAttribute('colAddr')||0),span=oh(cell,'cellSpan')[0],size=oh(cell,'cellSz')[0];
-if(col===0){span?.setAttribute('rowSpan',String(physicalRowCount));size?.setAttribute('height',String(timeSectionHeight));continue;}
-let record=records.find(x=>+x.date.slice(-2)===firstDay+col-1),entries=entriesFor(record),count=entries.length,perEntryRows=count?gridUnits.indexOf(6/count)-gridUnits.indexOf(0):gridRows,entryHeight=count?timeSectionHeight/count:timeSectionHeight,borderKind=col===16?'outer':'inner';
+if(col===0){span?.setAttribute('rowSpan',String(physicalRowCount));size?.setAttribute('height',String(sectionHeight));continue;}
+let record=records.find(x=>+x.date.slice(-2)===firstDay+col-1),entries=entriesFor(record),count=entries.length,perEntryRows=count?gridUnits.indexOf(6/count)-gridUnits.indexOf(0):gridRows,entryHeight=count?sectionHeight/count:sectionHeight,borderKind=col===16?'outer':'inner';
 if(count){perEntryRows=physicalBoundary(gridUnits.indexOf(6/count))-physicalBoundary(0);configureTimeCell(cell,count,perEntryRows,entryHeight,entries[0],true,borderKind);}
-else{span?.setAttribute('rowSpan',String(physicalRowCount));size?.setAttribute('height',String(timeSectionHeight));}
+else{span?.setAttribute('rowSpan',String(physicalRowCount));size?.setAttribute('height',String(sectionHeight));}
 }
 let anchor=firstRow;
 for(let gridIndex of splitGridIndices){
@@ -150,7 +150,7 @@ let col=Number(oh(sourceCell,'cellAddr')[0]?.getAttribute('colAddr')||0);if(col=
 let record=records.find(x=>+x.date.slice(-2)===firstDay+col-1),entries=entriesFor(record),count=entries.length;if(!count)continue;
 let entryIndex=unit/(6/count);if(!Number.isInteger(entryIndex)||entryIndex<=0||entryIndex>=count)continue;
 let entryEndRow=gridUnits.indexOf((entryIndex+1)*6/count),perEntryRows=physicalBoundary(entryEndRow)-physicalBoundary(gridIndex),copy=sourceCell.cloneNode(true),addr=oh(copy,'cellAddr')[0],borderKind=col===16?'outer':'inner';
-addr?.setAttribute('rowAddr',String(rowIndex+physicalBoundary(gridIndex)));configureTimeCell(copy,count,perEntryRows,timeSectionHeight/count,entries[entryIndex],false,borderKind);newCells.push(copy);
+addr?.setAttribute('rowAddr',String(rowIndex+physicalBoundary(gridIndex)));configureTimeCell(copy,count,perEntryRows,sectionHeight/count,entries[entryIndex],false,borderKind);newCells.push(copy);
 }
 newCells.sort((x,y)=>Number(oh(x,'cellAddr')[0]?.getAttribute('colAddr')||0)-Number(oh(y,'cellAddr')[0]?.getAttribute('colAddr')||0));
 if(!newCells.length)continue;
@@ -170,9 +170,9 @@ table.setAttribute('rowCnt',String(allRows.length));
 allRows.forEach((row,rowIndex)=>Array.from(row.children).filter(x=>x.localName==='tc').forEach(cell=>oh(cell,'cellAddr')[0]?.setAttribute('rowAddr',String(rowIndex))));
 let totalMinutes=0;
 for(let [dateRow,firstDay,activityRow,tripRow,activityGrid,tripGrid,activityPhysicalRows,activityLayout,tripLayout] of [[2,1,3,topTripBase,topActivityGrid,topTripGrid,1+topActivityExtra,topActivityLayout,topTripLayout],[7+topActivityExtra+topTripExtra,17,8+topActivityExtra+topTripExtra,9+topActivityExtra+topTripExtra+bottomActivityExtra,bottomActivityGrid,bottomTripGrid,1+bottomActivityExtra,bottomActivityLayout,bottomTripLayout]]){
-let activityRows=activityGrid.length-1,tripRows=tripGrid.length-1;
-compactCell(ch(table,activityRow,0),timeSectionHeight);
-compactCell(ch(table,tripRow,0),timeSectionHeight);
+let activityRows=activityGrid.length-1,tripRows=tripGrid.length-1,activitySectionHeight=attendanceBandHeight(activityGrid),tripSectionHeight=attendanceBandHeight(tripGrid);
+compactCell(ch(table,activityRow,0),activitySectionHeight);
+compactCell(ch(table,tripRow,0),tripSectionHeight);
 for(let i=0;i<16;i++){
 let day=firstDay+i,col=i+1,dateCell=ch(table,dateRow,col),activityCell=ch(table,activityRow,col),
 validDay=day<=daysInMonth,record=validDay?records.find(x=>+x.date.slice(-2)===day):undefined;
@@ -181,7 +181,7 @@ let activityTimes=activityTimesFor(record),activityTimeCount=activityTimes.lengt
 if(activityCell){
 let activitySpan=activityTimeCount?activityGrid.indexOf(6/activityTimeCount)-activityGrid.indexOf(0):activityPhysicalRows;
 oh(activityCell,'cellSpan')[0]?.setAttribute('rowSpan',String(activitySpan));
-compactCell(activityCell,activityTimeCount?timeSectionHeight/activityTimeCount:timeSectionHeight,activityTimeCount>=3?tightTimeParaId:'23');
+compactCell(activityCell,activityTimeCount?activitySectionHeight/activityTimeCount:activitySectionHeight,activityTimeCount>=3?tightTimeParaId:'23');
 let activitySub=oh(activityCell,'subList')[0];activitySub?.setAttribute('vertAlign','CENTER');
 if(record){
 let minutes=recordMinutes(record);
@@ -195,10 +195,10 @@ let tripCount=trips.length,tripSpan=tripCount?tripGrid.indexOf(6/tripCount)-trip
 for(let tripIndex=0;tripIndex<tripCount;tripIndex++){
 let tripStart=tripLayout.rowOffset(record,tripIndex),tripCell=ch(table,tripRow+tripStart,col);
 if(!tripCell)continue;
-let tripCellHeight=timeSectionHeight/tripCount;compactCell(tripCell,tripCellHeight,tripCount>=3?tightTimeParaId:'23');let sub=oh(tripCell,'subList')[0],margin=oh(tripCell,'cellMargin')[0];sub?.setAttribute('lineWrap','SQUEEZE');sub?.setAttribute('vertAlign','CENTER');if(margin){margin.setAttribute('top','0');margin.setAttribute('bottom','0');}
+let tripCellHeight=tripSectionHeight/tripCount;compactCell(tripCell,tripCellHeight,tripCount>=3?tightTimeParaId:'23');let sub=oh(tripCell,'subList')[0],margin=oh(tripCell,'cellMargin')[0];sub?.setAttribute('lineWrap','SQUEEZE');sub?.setAttribute('vertAlign','CENTER');if(margin){margin.setAttribute('top','0');margin.setAttribute('bottom','0');}
 let trip=trips[tripIndex];fillCellLines(tripCell,[trip.start+'~',trip.end||'']);oh(tripCell,'run').forEach(run=>run.setAttribute('charPrIDRef',timeCharId(tripCount)));
 }
-let blankTripCell=ch(table,tripRow,col);if(!tripCount&&blankTripCell){compactCell(blankTripCell,timeSectionHeight);let sub=oh(blankTripCell,'subList')[0],margin=oh(blankTripCell,'cellMargin')[0];sub?.setAttribute('vertAlign','CENTER');if(margin){margin.setAttribute('top','0');margin.setAttribute('bottom','0');}fillCellLines(blankTripCell,['','']);}
+let blankTripCell=ch(table,tripRow,col);if(!tripCount&&blankTripCell){compactCell(blankTripCell,tripSectionHeight);let sub=oh(blankTripCell,'subList')[0],margin=oh(blankTripCell,'cellMargin')[0];sub?.setAttribute('vertAlign','CENTER');if(margin){margin.setAttribute('top','0');margin.setAttribute('bottom','0');}fillCellLines(blankTripCell,['','']);}
 let hoursCell=ch(table,tripRow+tripRows,col);
 if(hoursCell){setFormulaResult(hoursCell,'');let dailyMinutes=includeDailyHours&&record?recordMinutes(record):null;fillCellLines(hoursCell,dailyMinutes===null?['']:[String(Number((dailyMinutes/60).toFixed(1)))]);oh(hoursCell,'run').forEach(run=>run.setAttribute('charPrIDRef','15'));}
 }
@@ -217,6 +217,7 @@ extra.remove();
 }
 }let totalHours=Number((totalMinutes/60).toFixed(1)),totalText=String(totalHours),summaryCell=ch(table,12+topActivityExtra+topTripExtra+bottomActivityExtra+bottomTripExtra,15);
 summaryCell&&sh(summaryCell,[totalText+'시간']);
+for(let row of allRows){let cells=Array.from(row.children).filter(x=>x.localName==='tc'),label=cells[0]&&oh(cells[0],'t').map(x=>x.textContent||'').join('').replace(/\s/g,'');if(label==='활동가'||label==='확인자')for(let cell of cells)oh(cell,'cellSz')[0]?.setAttribute('height','3473');}
 let tableSize=oh(table,'sz')[0];if(tableSize){let height=allRows.reduce((sum,row)=>{let cells=Array.from(row.children).filter(x=>x.localName==='tc'),single=cells.filter(cell=>Number(oh(cell,'cellSpan')[0]?.getAttribute('rowSpan')||1)===1),sizes=(single.length?single:cells).map(cell=>Number(oh(cell,'cellSz')[0]?.getAttribute('height')||0)/(single.length?1:Number(oh(cell,'cellSpan')[0]?.getAttribute('rowSpan')||1)));return sum+Math.max(0,...sizes);},0);tableSize.setAttribute('height',String(Math.round(height)));}
 for(let [dateRow,activityStart,rowCount] of [[2,3,1+topActivityExtra],[7+topActivityExtra+topTripExtra,8+topActivityExtra+topTripExtra,1+bottomActivityExtra]]){let activityEnd=activityStart+rowCount-1;for(let col=0;col<=16;col++){let dateCell=ch(table,dateRow,col);if(dateCell)dateCell.setAttribute('borderFillIDRef',col===0?dateBottomDoubleBorders.label:col===16?dateBottomDoubleBorders.outer:dateBottomDoubleBorders.inner);let cells=oh(table,'tc').filter(cell=>Number(oh(cell,'cellAddr')[0]?.getAttribute('colAddr')||-1)===col),firstCell=cells.find(cell=>Number(oh(cell,'cellAddr')[0]?.getAttribute('rowAddr')||-1)===activityStart);if(firstCell){let split=firstCell.getAttribute('borderFillIDRef')===splitBorders.first.inner||firstCell.getAttribute('borderFillIDRef')===splitBorders.first.outer;firstCell.setAttribute('borderFillIDRef',col===0?activityTopNoneBorders.label:col===16?(split?activityTopNoneBorders.splitOuter:activityTopNoneBorders.outer):(split?activityTopNoneBorders.splitInner:activityTopNoneBorders.inner));}let edgeCell=cells.find(cell=>{let addr=oh(cell,'cellAddr')[0],span=oh(cell,'cellSpan')[0],start=Number(addr?.getAttribute('rowAddr')||-1),rows=Number(span?.getAttribute('rowSpan')||1);return start>=activityStart&&start+rows-1===activityEnd;});if(edgeCell&&edgeCell!==firstCell)edgeCell.setAttribute('borderFillIDRef',col===0?activityBottomBorders.label:col===16?activityBottomBorders.outer:activityBottomBorders.inner);}}oh(xml,'linesegarray').forEach(x=>x.remove());
 archive['Contents/section0.xml']=Im(new XMLSerializer().serializeToString(xml));
