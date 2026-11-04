@@ -44,7 +44,7 @@ export function SharedJournalSignatureControls({ React, assets, date, busy, onAp
     h('label', { style: { display: 'grid', gap: 6 } }, h('span', null, '이달 전체에 사용할 서명'),
       h('select', { 'aria-label': '이달 전체에 사용할 서명', value: selected.id, disabled: busy, onChange: event => setSelectedId(event.target.value), style: { width: '100%', maxWidth: '100%', padding: 8, border: '1px solid #d6e1dc', borderRadius: 8 } },
         ...candidates.map(asset => h('option', { key: asset.id, value: asset.id }, asset.kind === 'source-signature' ? `${asset.date} · 원본 일지에서 추출한 서명` : asset.applyToAllDates ? '현재 이달 전체에 적용한 서명' : '따로 가져온 서명')))),
-    h(ImageComponent, { src: selected.url, alt: '전체 적용할 투명 서명 미리보기', style: { display: 'block', maxWidth: 180, maxHeight: 70, objectFit: 'contain' } }),
+    h('div', {className:'shared-signature-preview',style:{minHeight:70,display:'flex',alignItems:'center'}}, h(ImageComponent, { src: selected.url, alt: '전체 적용할 투명 서명 미리보기', style: { display: 'block', maxWidth: 180, maxHeight: 70, objectFit: 'contain' } })),
     h('div', {className:'shared-signature-actions',style:{display:'flex',flexWrap:'wrap',gap:8,alignItems:'center'}},
       h('button', { type: 'button', disabled: busy || alreadyApplied, onClick: () => onApply(selected), style: { justifySelf: 'start', padding: '9px 12px', border: '1px solid #315e4b', borderRadius: 8, background: '#eff7f3', color: '#244b3a', cursor: 'pointer' } }, alreadyApplied ? '이달 전체 적용 중' : '이 서명을 이달 전체에 적용'),
       onClearMonth && h('button', {type:'button',disabled:busy,onClick:onClearMonth,style:{padding:'9px 12px',border:'1px solid #b65b5b',borderRadius:8,background:'#fff7f5',color:'#954343',cursor:'pointer'}},'이달 서명 전체 삭제')),
