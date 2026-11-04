@@ -26,6 +26,7 @@ export function SharedJournalSignatureControls({ React, assets, date, busy, onAp
   const [selectedId, setSelectedId] = React.useState('');
   React.useEffect(() => { setSelectedId(preferred?.id || ''); }, [date, preferred?.id]);
   if (!candidates.length) return null;
+  if (candidates.some(asset => asset.excludedDates?.includes(date))) return h('p', {role: 'status', style: {margin: 0, color: '#60756b'}}, '이 날짜의 서명을 삭제했습니다. JPG·PNG 서명 적용으로 새 서명을 넣을 수 있습니다.');
   const selected = candidates.find(asset => asset.id === selectedId) || preferred;
   const common = candidates.find(asset => asset.kind === 'signature' && asset.applyToAllDates);
   const alreadyApplied = common?.id === selected.id || common?.originalSignatureId === selected.id;
