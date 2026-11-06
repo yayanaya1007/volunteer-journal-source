@@ -1,4 +1,10 @@
 // A whole-month signature is used only after an explicit user action.
+export function isSignaturePasteTarget(event) {
+  const target = event?.target;
+  return !!(target?.matches?.('textarea[data-signature-paste="true"]') &&
+    target.ownerDocument?.activeElement === target);
+}
+
 export function journalSignatureForDate(assets, date) {
   const common = assets.find(asset => asset.kind === 'signature' && asset.url);
   const chosen = common?.applyToAllDates ? common : assets.find(asset => asset.kind === 'source-signature' && asset.date === date && asset.url) || common;
