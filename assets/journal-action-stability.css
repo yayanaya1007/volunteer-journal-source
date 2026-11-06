@@ -1,0 +1,2 @@
+/* Expanding fields or validation notices must not change the user's scroll position. */
+.workspace, dialog, [role="dialog"] { overflow-anchor: none; }

@@ -194,8 +194,8 @@
     opener.setAttribute("data-journal-delete-manager", "true");
     opener.setAttribute("aria-haspopup", "dialog");
     opener.addEventListener("click", () => { render(); dialog.showModal(); });
-    const select = bar.querySelector("select");
-    if (select) select.insertAdjacentElement("afterend", opener);
+    // A separate action must not become part of the month selector's label.
+    bar.appendChild(opener);
   }
 
   new MutationObserver(attach).observe(document.documentElement, { childList: true, subtree: true });
