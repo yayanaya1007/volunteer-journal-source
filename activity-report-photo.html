@@ -15,8 +15,23 @@
   <style>
     *{box-sizing:border-box}body{margin:0;background:#f1f2ee;color:#26362b;font-family:Arial,"Malgun Gothic",sans-serif}.toolbar{height:72px;display:flex;align-items:center;gap:22px;padding:0 max(20px,calc((100vw - 1180px)/2));background:#fff;border-bottom:1px solid #e7e9e3}.brand{display:flex;align-items:center;gap:10px;margin-right:auto}.brand-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#315b48;color:#fff;font-size:17px;font-weight:700}.brand b,.brand small{display:block}.brand b{font-size:15px}.brand small{margin-top:4px;color:#849086;font-size:10px}.actions{display:flex;gap:8px}.btn{min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:0 13px;border:1px solid #dfe5dc;border-radius:8px;background:#fff;color:#48664f;font-size:12px;font-weight:650;cursor:pointer}.btn.primary{border-color:#315b48;background:#315b48;color:#fff}.settings{width:min(1120px,calc(100% - 40px));display:flex;align-items:end;gap:14px;margin:22px auto 12px;padding:16px 18px;border:1px solid #e4e7df;border-radius:12px;background:#fff}.settings-intro{display:grid;gap:5px;align-self:center;min-width:250px;margin-right:auto}.settings-intro b{font-size:12px}.settings-intro small{max-width:430px;color:#7e897e;font-size:10px;line-height:1.6}.settings label{display:grid;gap:6px;min-width:250px}.settings label span{font-size:10px;font-weight:650;color:#647266}.settings input{height:36px;padding:0 10px;border:1px solid #e3e7df;border-radius:7px;background:#fcfdfa;color:#314235;font:inherit;font-size:12px}.settings .date{min-width:155px}.message{width:min(1120px,calc(100% - 40px));margin:0 auto 8px;color:#53745a;font-size:11px}.canvas-wrap{display:flex;justify-content:center;overflow:auto;padding:12px 18px 20px}.page{width:210mm;min-width:210mm;height:297mm;padding:12mm 10mm 8mm;background:#fff;color:#111;box-shadow:0 5px 28px #28362a18}.page h1{height:13mm;margin:0 0 2.5mm;text-align:center;font-family:"함초롱바탕","함초롬바탕","HCR Batang",Batang,"바탕",serif;font-size:21pt;line-height:13mm;text-decoration:underline;text-underline-offset:2px}.frame{height:245mm;border:2px solid #111}.heading{height:14mm;display:grid;grid-template-columns:1.45fr 1fr;align-items:center;padding:0 4mm;border-bottom:1px solid #111;font-family:"나눔고딕","Nanum Gothic",sans-serif;font-size:12pt}.heading>div{display:flex;align-items:center;gap:2mm;min-width:0}.heading>div:first-child span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slots{height:calc(100% - 14mm);display:flex;flex-direction:column;align-items:center;gap:7mm;padding:0}.slot{position:relative;width:127mm;height:64mm;display:grid;place-items:center;overflow:hidden;border:1px solid #333;background:#fff}.slot:first-child{margin-top:7mm}.slot:nth-child(2){height:64mm}.slot.active:not(.filled){border-style:dashed;border-color:#78927c}.slot img{display:block;width:auto;height:64mm;max-width:100%;max-height:100%;object-fit:contain}.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#afb8ad}.empty span{font-size:12px}.empty small{color:#b4bbb2;font-size:9px}.slot-controls{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:5px;padding:5px 7px;background:#ffffffef}.slot-controls b{margin-right:auto;color:#52715a;font-size:9px}.slot-controls button{height:24px;padding:0 8px;border:1px solid #dce4d9;border-radius:5px;background:#fff;color:#4c6952;font-size:9px;cursor:pointer}.footer{width:min(1120px,calc(100% - 40px));display:flex;align-items:center;gap:15px;margin:0 auto 24px;color:#758176;font-size:10px}.reset{margin-left:auto;min-height:32px}.preview-bottom[hidden]{display:none}.preview-bottom{position:fixed;right:24px;bottom:20px;z-index:5;display:flex;gap:8px;padding:8px;border:1px solid #e3e7df;border-radius:12px;background:#ffffffed;box-shadow:0 5px 24px #26362416}.is-preview .settings,.is-preview .message,.is-preview .footer{display:none}.is-preview .slot.active:not(.filled){border-style:solid;border-color:#333}.is-preview .empty{display:none}
     @media(max-width:900px){.settings{flex-wrap:wrap;align-items:stretch}.settings-intro{width:100%}.settings label{flex:1;min-width:200px}.settings .date{min-width:155px}.toolbar{padding:0 14px;gap:10px}.actions{gap:5px}.btn{padding:0 9px;font-size:10px}.canvas-wrap{justify-content:flex-start}}
-    @media(max-width:640px){.toolbar{height:64px}.brand b{font-size:12px}.brand small{font-size:8px}.brand-mark{width:32px;height:32px}.settings{width:calc(100% - 24px);padding:13px;gap:10px}.settings label{min-width:180px}.settings .date{min-width:140px}.footer{width:calc(100% - 24px);align-items:flex-start;flex-direction:column}.reset{margin:0}}
-    @media print{@page{size:A4 portrait;margin:5mm 10mm}body{background:#fff}.screen-only{display:none!important}.canvas-wrap{display:block;overflow:visible;padding:0}.page{width:190mm;min-width:0;height:287mm;margin:0;padding:7mm 0 0;box-shadow:none;page-break-after:always;break-after:page}.frame{height:245mm}.empty{display:none!important}}
+    .photo-count-select{display:grid;gap:7px;margin:0;padding:0;border:0;align-self:center}
+    .photo-count-select legend{margin-bottom:2px;color:#647266;font-size:10px;font-weight:650}
+    .photo-count-options{display:flex;gap:6px}
+    .photo-count-options label{min-width:0;padding:0;border:0}
+    .photo-count-options input{position:absolute;opacity:0;pointer-events:none}
+    .photo-count-options span{display:inline-flex;min-width:54px;min-height:34px;align-items:center;justify-content:center;padding:0 12px;border:1px solid #dfe5dc;border-radius:8px;background:#fff;color:#48664f;font-size:12px;font-weight:650;cursor:pointer}
+    .photo-count-options input:checked+span{border-color:#315b48;background:#315b48;color:#fff}
+    .photo-count-options input:focus-visible+span{outline:2px solid #86a795;outline-offset:2px}
+    #pages{display:contents}
+    .page.grid-page{padding:15mm 20mm 10mm}
+    .page.grid-page .frame{height:252mm}
+    .page.grid-page .slots{height:calc(100% - 14mm);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:5mm;padding:6mm 5mm}
+    .page.grid-page .slot{width:100%;height:63mm;margin-top:0}
+    .page.grid-page.mode-8 .slot{height:44mm}
+    .page.grid-page .slot img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
+    @media(max-width:640px){.photo-count-select{width:100%}.photo-count-options{width:100%}.photo-count-options label{flex:1}.photo-count-options span{width:100%}.toolbar{height:64px}.brand b{font-size:12px}.brand small{font-size:8px}.brand-mark{width:32px;height:32px}.settings{width:calc(100% - 24px);padding:13px;gap:10px}.settings label{min-width:180px}.settings .date{min-width:140px}.footer{width:calc(100% - 24px);align-items:flex-start;flex-direction:column}.reset{margin:0}}
+    @media print{@page{size:A4 portrait;margin:5mm 10mm}body{background:#fff}.screen-only{display:none!important}.canvas-wrap{display:block;overflow:visible;padding:0}.page{width:190mm;min-width:0;height:287mm;margin:0;padding:7mm 0 0;box-shadow:none;page-break-after:always;break-after:page}.page.grid-page{width:170mm;height:272mm;margin:10mm auto 0;padding:0;page-break-after:always;break-after:page}.page.grid-page .frame{height:252mm}.page:last-child{page-break-after:auto;break-after:auto}.frame{height:245mm}.empty{display:none!important}}
   </style>
 </head>
 <body>
@@ -25,18 +40,13 @@
     <div class="actions"><button class="btn" id="install-photo-app" type="button">사진 앱 설치</button><button class="btn" id="preview">미리보기</button><button class="btn primary" id="print">인쇄 / PDF 저장</button></div>
   </header>
   <section class="settings screen-only">
-    <div class="settings-intro"><b>사진 넣기</b><small>사진 칸을 선택한 뒤 Ctrl+V로 붙여넣거나 사진 선택을 누르세요. 사진 전체가 보이도록 비율을 유지해 맞춥니다.</small></div>
+    <div class="settings-intro"><b>사진 넣기</b><small>사진 수를 고른 뒤 사진 칸을 선택하세요. 붙여넣거나 사진을 골라도 전체가 보이도록 비율을 유지합니다.</small></div>
+    <fieldset class="photo-count-select"><legend>사진 수</legend><div class="photo-count-options" role="radiogroup" aria-label="사진 수 선택"><label><input type="radio" name="photo-count" value="3" checked><span>3장</span></label><label><input type="radio" name="photo-count" value="6"><span>6장</span></label><label><input type="radio" name="photo-count" value="8"><span>8장</span></label></div></fieldset>
     <label><span>봉사내용</span><input id="activity" maxlength="50" placeholder="예: 지역안전 및 야간순찰 방범활동"></label>
     <label class="date"><span>일시</span><input id="date" type="date"></label>
   </section>
   <p class="message screen-only" id="message" role="status"></p>
-  <div class="canvas-wrap"><article class="page" aria-label="활동보고서 사진 인쇄 미리보기">
-    <h1>자원봉사 활동사진</h1>
-    <section class="frame">
-      <header class="heading"><div><b>● 봉사내용:</b><span id="printed-activity"></span></div><div><b>● 일 시:</b><span id="printed-date"></span></div></header>
-      <div class="slots" id="slots"></div>
-    </section>
-  </article></div>
+  <div class="canvas-wrap"><div id="pages"></div></div>
   <footer class="footer screen-only"><span id="count">0/3장 입력 · 사진은 원본 비율을 유지합니다.</span><button class="btn reset" id="clear">사진 모두 지우기</button></footer>
   <div class="preview-bottom screen-only" id="preview-actions" hidden><button class="btn" id="back-to-edit">미리보기 닫기</button><button class="btn primary" id="print-preview">인쇄 / PDF 저장</button></div>
   <dialog id="photo-install-help" class="photo-install-help screen-only" aria-labelledby="photo-install-title">
@@ -49,14 +59,52 @@
   </dialog>
   <script>
     (()=>{
-      const slots=document.getElementById('slots'),activity=document.getElementById('activity'),date=document.getElementById('date'),printedActivity=document.getElementById('printed-activity'),printedDate=document.getElementById('printed-date'),message=document.getElementById('message'),count=document.getElementById('count');
-      let photos=[null,null,null],active=0,preview=false;
-      const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};date.value=localDate();
+      const pageHost=document.getElementById('pages'),activity=document.getElementById('activity'),date=document.getElementById('date'),message=document.getElementById('message'),count=document.getElementById('count');
+      const countChoices=Array.from(document.querySelectorAll('input[name="photo-count"]'));
+      let photos=Array(8).fill(null),active=0,preview=false,photoCount=3;
+      const localDate=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+      date.value=localDate();
       const say=text=>{message.textContent=text};
-      const refresh=()=>{printedActivity.textContent=activity.value;printedDate.textContent=date.value?(()=>{const [year,month,day]=date.value.split('-').map(Number);const weekday=['일','월','화','수','목','금','토'][new Date(year,month-1,day).getDay()];return `${month}.${day}.(${weekday})`})():'';count.textContent=`${photos.filter(Boolean).length}/3장 입력 · 사진은 원본 비율을 유지합니다.`;slots.replaceChildren();photos.forEach((photo,index)=>{const box=document.createElement('div');box.className=`slot${active===index?' active':''}${photo?' filled':''}`;box.addEventListener('click',()=>{active=index;refresh()});box.addEventListener('dragover',event=>event.preventDefault());box.addEventListener('drop',event=>{event.preventDefault();const file=Array.from(event.dataTransfer.files).find(item=>item.type.startsWith('image/'));if(file)place(file,index)});if(photo){const img=document.createElement('img');img.src=photo.url;img.alt=`${index+1}번 활동 사진`;box.append(img)}else{const empty=document.createElement('div');empty.className='empty';empty.innerHTML=`<span>${index+1}번 사진 칸</span><small class="screen-only">사진을 붙여넣거나 선택</small>`;box.append(empty)}if(!preview){const tools=document.createElement('div');tools.className='slot-controls screen-only';const label=document.createElement('b');label.textContent=`${index+1}번`;const pick=document.createElement('button');pick.textContent='사진 선택';pick.addEventListener('click',event=>{event.stopPropagation();active=index;const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=()=>{if(input.files[0])place(input.files[0],index)};input.click()});tools.append(label,pick);if(photo){const remove=document.createElement('button');remove.textContent='삭제';remove.addEventListener('click',event=>{event.stopPropagation();URL.revokeObjectURL(photo.url);photos[index]=null;refresh()});tools.append(remove)}box.append(tools)}slots.append(box)})};
-      const place=(file,index)=>{if(!file.type.startsWith('image/'))return say('이미지 사진을 선택해 주세요.');if(photos[index])URL.revokeObjectURL(photos[index].url);photos[index]={url:URL.createObjectURL(file),name:file.name};active=index;refresh();say(`${index+1}번 사진 칸에 넣었습니다.`)};
-      document.addEventListener('paste',event=>{const file=Array.from(event.clipboardData.items).find(item=>item.type.startsWith('image/'))?.getAsFile();if(file){event.preventDefault();place(file,active)}});activity.addEventListener('input',refresh);date.addEventListener('input',refresh);
-      const toggle=()=>{preview=!preview;document.body.classList.toggle('is-preview',preview);document.getElementById('preview-actions').hidden=!preview;document.getElementById('preview').textContent=preview?'편집으로':'미리보기';refresh()};document.getElementById('preview').addEventListener('click',toggle);document.getElementById('back-to-edit').addEventListener('click',toggle);document.getElementById('print').addEventListener('click',()=>window.print());document.getElementById('print-preview').addEventListener('click',()=>window.print());document.getElementById('clear').addEventListener('click',()=>{photos.forEach(photo=>photo&&URL.revokeObjectURL(photo.url));photos=[null,null,null];refresh();say('사진을 모두 지웠습니다.')});refresh();
+      const make=(tag,className,text)=>{const element=document.createElement(tag);if(className)element.className=className;if(text!==undefined)element.textContent=text;return element};
+      const formatDate=()=>{if(!date.value)return '';const [year,month,day]=date.value.split('-').map(Number);const weekday=['일','월','화','수','목','금','토'][new Date(year,month-1,day).getDay()];return `${month}.${day}.(${weekday})`};
+      const render=()=>{
+        photoCount=Number(countChoices.find(choice=>choice.checked)?.value||3);
+        if(active>=photoCount)active=0;
+        const article=make('article',`page${photoCount===3?'':` grid-page mode-${photoCount}`}`);
+        article.setAttribute('aria-label',`활동보고서 사진 ${photoCount}장 인쇄 미리보기`);
+        article.append(make('h1','', '자원봉사 활동사진'));
+        const frame=make('section','frame');
+        const heading=make('header','heading');
+        const activityLine=make('div');activityLine.append(make('b','', '● 봉사내용:'),make('span','',activity.value));
+        const dateLine=make('div');dateLine.append(make('b','', '● 일 시:'),make('span','',formatDate()));
+        heading.append(activityLine,dateLine);frame.append(heading);
+        const slots=make('div','slots');
+        for(let index=0;index<photoCount;index++){
+          const photo=photos[index],box=make('div',`slot${active===index?' active':''}${photo?' filled':''}`);
+          box.addEventListener('click',()=>{active=index;render()});
+          box.addEventListener('dragover',event=>event.preventDefault());
+          box.addEventListener('drop',event=>{event.preventDefault();const file=Array.from(event.dataTransfer.files).find(item=>item.type.startsWith('image/'));if(file)place(file,index)});
+          if(photo){const img=make('img');img.src=photo.url;img.alt=`${index+1}번 활동 사진`;box.append(img)}
+          else{const empty=make('div','empty');empty.append(make('span','',`${index+1}번 사진 칸`),make('small','screen-only','사진을 붙여넣거나 선택'));box.append(empty)}
+          if(!preview){
+            const tools=make('div','slot-controls screen-only');tools.append(make('b','',`${index+1}번`));
+            const pick=make('button','', '사진 선택');pick.addEventListener('click',event=>{event.stopPropagation();active=index;const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';input.onchange=()=>{if(input.files[0])place(input.files[0],index)};input.click()});tools.append(pick);
+            if(photo){const remove=make('button','', '삭제');remove.addEventListener('click',event=>{event.stopPropagation();URL.revokeObjectURL(photo.url);photos[index]=null;render()});tools.append(remove)}
+            box.append(tools);
+          }
+          slots.append(box);
+        }
+        frame.append(slots);article.append(frame);pageHost.replaceChildren(article);
+        const filled=photos.slice(0,photoCount).filter(Boolean).length;
+        count.textContent=`${filled}/${photoCount}장 입력 · 사진 전체를 비율대로 표시합니다.`;
+      };
+      const place=(file,index)=>{if(!file.type.startsWith('image/'))return say('이미지 사진을 선택해 주세요.');if(photos[index])URL.revokeObjectURL(photos[index].url);photos[index]={url:URL.createObjectURL(file),name:file.name};active=index;render();say(`${index+1}번 사진 칸에 넣었습니다.`)};
+      document.addEventListener('paste',event=>{const file=Array.from(event.clipboardData.items).find(item=>item.type.startsWith('image/'))?.getAsFile();if(file){event.preventDefault();place(file,active)}});
+      activity.addEventListener('input',render);date.addEventListener('input',render);countChoices.forEach(choice=>choice.addEventListener('change',()=>{active=0;render();say(`${choice.value}장 사진 양식으로 바꿨습니다.`)}));
+      const toggle=()=>{preview=!preview;document.body.classList.toggle('is-preview',preview);document.getElementById('preview-actions').hidden=!preview;document.getElementById('preview').textContent=preview?'편집으로':'미리보기';render()};
+      document.getElementById('preview').addEventListener('click',toggle);document.getElementById('back-to-edit').addEventListener('click',toggle);document.getElementById('print').addEventListener('click',()=>window.print());document.getElementById('print-preview').addEventListener('click',()=>window.print());
+      document.getElementById('clear').addEventListener('click',()=>{photos.forEach(photo=>photo&&URL.revokeObjectURL(photo.url));photos=Array(8).fill(null);render();say('사진을 모두 지웠습니다.')});
+      render();
     })();
   </script>
 </body>
