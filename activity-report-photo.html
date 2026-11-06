@@ -30,8 +30,15 @@
     .page.grid-page .slot{width:100%;height:63mm;margin-top:0}
     .page.grid-page.mode-8 .slot{height:44mm}
     .page.grid-page .slot img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain}
+    /* The 6-photo sheet is the same table as the 8-photo sheet without its last row. */
+    .page.grid-page .frame{height:auto}
+    .page.grid-page .slots{height:auto;grid-auto-rows:44mm;gap:0;padding:6mm 5mm;border:1px solid #333}
+    .page.grid-page .slot{height:44mm!important;margin:0;border:0}
+    .page.grid-page .slot:nth-child(odd){border-right:1px solid #333}
+    .page.grid-page.mode-6 .slot:nth-child(-n+4),.page.grid-page.mode-8 .slot:nth-child(-n+6){border-bottom:1px solid #333}
+    .page.grid-page .slot.active:not(.filled){background:#f7fbf7;outline:0}
     @media(max-width:640px){.photo-count-select{width:100%}.photo-count-options{width:100%}.photo-count-options label{flex:1}.photo-count-options span{width:100%}.toolbar{height:64px}.brand b{font-size:12px}.brand small{font-size:8px}.brand-mark{width:32px;height:32px}.settings{width:calc(100% - 24px);padding:13px;gap:10px}.settings label{min-width:180px}.settings .date{min-width:140px}.footer{width:calc(100% - 24px);align-items:flex-start;flex-direction:column}.reset{margin:0}}
-    @media print{@page{size:A4 portrait;margin:5mm 10mm}body{background:#fff}.screen-only{display:none!important}.canvas-wrap{display:block;overflow:visible;padding:0}.page{width:190mm;min-width:0;height:287mm;margin:0;padding:7mm 0 0;box-shadow:none;page-break-after:always;break-after:page}.page.grid-page{width:170mm;height:272mm;margin:10mm auto 0;padding:0;page-break-after:always;break-after:page}.page.grid-page .frame{height:252mm}.page:last-child{page-break-after:auto;break-after:auto}.frame{height:245mm}.empty{display:none!important}}
+    @media print{@page{size:A4 portrait;margin:5mm 10mm}body{background:#fff}.screen-only{display:none!important}.canvas-wrap{display:block;overflow:visible;padding:0}.page{width:190mm;min-width:0;height:287mm;margin:0;padding:7mm 0 0;box-shadow:none;page-break-after:always;break-after:page}.page.grid-page{width:170mm;height:272mm;margin:10mm auto 0;padding:0;page-break-after:always;break-after:page}.page.grid-page .frame{height:auto}.page:last-child{page-break-after:auto;break-after:auto}.frame{height:245mm}.empty{display:none!important}.page.grid-page .slot.active:not(.filled){outline:0}}
   </style>
 </head>
 <body>
