@@ -26,6 +26,11 @@ export function focusJournalValidation(message, doc = document) {
   else if (message.includes('출장 시간') || message.includes('출장시간')) target = [...pane.querySelectorAll('.trip-edit input[type="time"]')].find(input => !input.value) || pane.querySelector('.trip-edit input[type="time"]');
   else if (message.includes('활동유형 기타')) target = pane.querySelector('.activity-type-other-input');
   else if (message.includes('확인 항목')) target = pane.querySelector('.declarations [role="checkbox"][aria-checked="false"]');
+  else if (message.includes('봉사시간을 확인해주세요')) {
+    target = [...pane.querySelectorAll('input[type="time"]')].find(input =>
+      !input.closest('.trip-edit') && input.value.startsWith('00:') &&
+      input.closest('label')?.querySelector('span')?.textContent.includes('종료시간'));
+  }
   else if (message.includes('활동시간') || message.includes('시작·종료 시간')) target = [...pane.querySelectorAll('input[type="time"]')].find(input => !input.closest('.trip-edit') && !input.value) || field('시작시간');
   else if (message.includes(' 칸')) target = field(message.split(' 칸')[0]);
   if (!target) return false;
