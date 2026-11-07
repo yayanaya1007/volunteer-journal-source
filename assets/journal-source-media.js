@@ -42,11 +42,38 @@ export function extractHwpxJournalMedia(bytes, records) {
       manifest.set(item.getAttribute('id'), {path: href.replace(/^\.\//, ''), type: item.getAttribute('media-type') || ''});
     }
   }
+  const backgroundImages = new Map();
+  if (archive['Contents/header.xml']) {
+    const header = parser.parseFromString(strFromU8(archive['Contents/header.xml']), 'application/xml');
+    for (const fill of header.getElementsByTagNameNS('*', 'borderFill')) {
+      const brush = fill.getElementsByTagNameNS('*', 'imgBrush')[0];
+      const ref = brush?.getElementsByTagNameNS('*', 'img')[0]?.getAttribute('binaryItemIDRef');
+      if (ref) backgroundImages.set(fill.getAttribute('id'), ref);
+    }
+  }
   const pages = records.map((record, index) => ({page: record.page || index + 1, date: record.date, photos: [], mediaWarnings: []}));
   const byDate = new Map();
   records.forEach((record, index) => { if (record.date && !byDate.has(record.date)) byDate.set(record.date, index); });
   const seen = new Set();
   let currentDate = '', section = '', matched = 0, unassigned = 0;
+  const addImage = (ref, kind) => {
+    const index = byDate.get(currentDate);
+    if (index === undefined) { unassigned++; return; }
+    const key = `${currentDate}:${kind}:${ref}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    const item = manifest.get(ref), href = item?.path || '';
+    const path = paths.get(href.toLowerCase()) || paths.get(('Contents/' + href).toLowerCase()) ||
+      Object.keys(archive).find(path => path.toLowerCase().startsWith(`bindata/${ref.toLowerCase()}.`));
+    if (!path || !archive[path]?.length) { pages[index].mediaWarnings.push('원본에서 사진 파일 연결을 찾지 못했습니다.'); return; }
+    const extension = path.split('.').pop().toLowerCase();
+    const type = (item?.type || ({jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', bmp:'image/bmp', gif:'image/gif', webp:'image/webp'}[extension]) || '').replace('image/jpg', 'image/jpeg');
+    if (!type.startsWith('image/')) { pages[index].mediaWarnings.push('원본 사진의 이미지 형식을 확인해 주세요.'); return; }
+    const blob = new Blob([archive[path]], {type});
+    if (kind === 'signature') pages[index].signature ||= blob;
+    else pages[index].photos.push(blob);
+  };
+  const evidenceCells = new WeakSet();
   for (const name of names) {
     const xml = parser.parseFromString(strFromU8(archive[name]), 'application/xml');
     if (xml.getElementsByTagNameNS('*', 'parsererror').length) throw new Error('원본 사진의 문서 구조를 읽지 못했습니다.');
@@ -83,6 +110,18 @@ export function extractHwpxJournalMedia(bytes, records) {
           }
         }
         if(header?.length===5&&header[0]==='순번'&&header[1]==='출장시간'&&header[3]==='출장목적'){
+          if (backgroundImages.size && /^(?:결과및)?증빙(?:사진)?$/.test(header[4])) {
+            const evidenceHeader = children(cells(rows[0])[4]);
+            const firstColumn = Number(evidenceHeader.find(part => part.localName === 'cellAddr')?.getAttribute('colAddr') ?? 4);
+            const columnCount = Number(evidenceHeader.find(part => part.localName === 'cellSpan')?.getAttribute('colSpan') ?? 1);
+            for (const row of rows.slice(1)) {
+              cells(row).forEach((cell, index) => {
+                const address = children(cell).find(part => part.localName === 'cellAddr');
+                const column = Number(address?.getAttribute('colAddr') ?? index);
+                if (column >= firstColumn && column < firstColumn + columnCount) evidenceCells.add(cell);
+              });
+            }
+          }
           const index=byDate.get(currentDate);
           if(index!==undefined){
             const cellText=cell=>[...cell.getElementsByTagNameNS('*','p')].map(paragraphText).filter(Boolean).join('\n').trim();
@@ -103,24 +142,14 @@ export function extractHwpxJournalMedia(bytes, records) {
         const cellText = cell ? textOf(cell) : '';
         const signature = /서\s*명|날\s*인/.test(cellText) || section === 'confirmation';
         if (!signature && section !== 'photos') return;
-        const index = byDate.get(currentDate);
-        if (index === undefined) { unassigned++; return; }
-        const ref = image.getAttribute('binaryItemIDRef'), item = manifest.get(ref);
-        let path = item?.path;
-        path = paths.get((path || '').toLowerCase()) || paths.get(('Contents/' + path).toLowerCase()) || Object.keys(archive).find(path => new RegExp('^BinData/' + ref.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\.', 'i').test(path));
-        const kind = signature ? 'signature' : 'photo', key = `${currentDate}:${kind}:${ref}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        if (!path || !archive[path]?.length) { pages[index].mediaWarnings.push('원본에서 사진 파일 연결을 찾지 못했습니다.'); return; }
-        const extension = path.split('.').pop().toLowerCase();
-        const type = (item?.type || ({jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', bmp:'image/bmp', gif:'image/gif', webp:'image/webp'}[extension]) || '').replace('image/jpg', 'image/jpeg');
-        if (!type.startsWith('image/')) { pages[index].mediaWarnings.push('원본 사진의 이미지 형식을 확인해 주세요.'); return; }
-        const blob = new Blob([archive[path]], {type});
-        if (signature) pages[index].signature ||= blob;
-        else pages[index].photos.push(blob);
+        addImage(image.getAttribute('binaryItemIDRef'), signature ? 'signature' : 'photo');
         return;
       }
       for (const child of children(node)) visit(child);
+      if (evidenceCells.has(node)) {
+        const ref = backgroundImages.get(node.getAttribute('borderFillIDRef'));
+        if (ref) addImage(ref, 'photo');
+      }
     };
     visit(xml.documentElement);
   }

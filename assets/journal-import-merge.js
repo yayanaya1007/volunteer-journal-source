@@ -20,7 +20,7 @@ export function missingJournalTrips(existing, incoming, sourceId) {
     .map(record => ({...record, trips: sourceTrips.get(record.date), reviewed: false}));
 }
 
-export function chooseJournalImportMode(dates, missingTripDates = []) {
+export function chooseJournalImportMode(dates, missingTripDates = [], missingPhotoDates = []) {
   return new Promise(resolve => {
     const dialog = document.createElement('dialog');
     dialog.className = 'journal-import-choice';
@@ -31,10 +31,13 @@ export function chooseJournalImportMode(dates, missingTripDates = []) {
     const actions = document.createElement('div'); actions.className = 'journal-import-choice-actions';
     let settled = false;
     const finish = mode => { if (settled) return; settled = true; dialog.close(); dialog.remove(); resolve(mode); };
-    const showTripDates = () => {
-      heading.textContent = '빈 출장내역을 채울 날짜 선택';
-      help.textContent = '원본에 출장내역이 있고, 일지의 출장내역이 비어 있는 날짜입니다.';
-      note.textContent = '체크한 날짜의 출장내역만 채웁니다. 이미 입력한 출장내역과 활동내용·사진·서명은 유지합니다.';
+    const showRepairDates = mode => {
+      const photos = mode === 'photos';
+      const field = photos ? '출장사진' : '출장내역';
+      heading.textContent = `빈 ${field}을 채울 날짜 선택`;
+      help.textContent = `원본에 ${field}이 있고, 일지의 ${field}이 비어 있는 날짜입니다.`;
+      note.textContent = photos ? '체크한 날짜에 출장사진만 채웁니다. 이미 입력한 일지와 사진·서명은 유지합니다.' :
+        '체크한 날짜의 출장내역만 채웁니다. 이미 입력한 출장내역과 활동내용·사진·서명은 유지합니다.';
       const list = document.createElement('fieldset');
       list.className = 'journal-trip-repair-dates';
       const legend = document.createElement('legend');
@@ -44,10 +47,10 @@ export function chooseJournalImportMode(dates, missingTripDates = []) {
       const apply = document.createElement('button');
       apply.type = 'button';
       apply.className = 'primary';
-      apply.textContent = '선택한 빈 출장내역 채우기';
+      apply.textContent = `선택한 빈 ${field} 채우기`;
       apply.disabled = true;
-      apply.addEventListener('click', () => finish({mode: 'trips', dates: [...selected]}));
-      for (const date of missingTripDates) {
+      apply.addEventListener('click', () => finish({mode, dates: [...selected]}));
+      for (const date of photos ? missingPhotoDates : missingTripDates) {
         const label = document.createElement('label');
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
@@ -69,11 +72,12 @@ export function chooseJournalImportMode(dates, missingTripDates = []) {
     };
     const choices = [['empty', '비어 있는 날짜만 넣기']];
     if (missingTripDates.length) choices.push(['trips', `빈 출장내역 날짜 선택 (${missingTripDates.length}일)`]);
+    if (missingPhotoDates.length) choices.push(['photos', `빈 출장사진 날짜 선택 (${missingPhotoDates.length}일)`]);
     choices.push(['overwrite', '덮어쓰기'], ['cancel', '취소']);
     for (const [mode, label] of choices) {
       const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
       if (mode === 'empty') { button.className = 'primary'; button.autofocus = true; }
-      button.addEventListener('click', mode === 'trips' ? showTripDates : () => finish(mode)); actions.appendChild(button);
+      button.addEventListener('click', () => mode === 'trips' || mode === 'photos' ? showRepairDates(mode) : finish(mode)); actions.appendChild(button);
     }
     dialog.addEventListener('cancel', event => { event.preventDefault(); finish('cancel'); });
     dialog.addEventListener('close', () => finish('cancel'));

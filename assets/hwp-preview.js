@@ -1,4 +1,4 @@
-import {extractHwpxJournalMedia} from './journal-source-media.js?v=20261107-shared-hour-v5';
+import {extractHwpxJournalMedia} from './journal-source-media.js?v=20261107-evidence-background-v6';
 import initHwp, { HwpDocument } from './rhwp-VciUJEJo.js';
 import { openCachedSourceDocument } from './hwpx-source-layout.js?v=20261104-date-media-v2';
 
