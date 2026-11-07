@@ -368,18 +368,25 @@ async function og(e,t,n){let r=await Th(e.id),i;if(e.type===`application/pdf`)i=
 async function Oe(t){if(e&&!/^20\d{2}$/.test(e)){T(`원본 연도 보정에는 네 자리 연도(예: 2026)를 입력해 주세요.`);return}let sourceKey=e=>e.normalize("NFKC").replace(/^TalkFile[_\s-]*/i,"" ).replace(/(?:\.hwp){2,}$/i,".hwp").replace(/(?:\.hwpx){2,}$/i,".hwpx").toLowerCase(),replacementIds=new Set(ae.current.assets.filter(e=>e.kind===`source`&&sourceKey(e.name)===sourceKey(t.name)).map(e=>e.id)),n=ae.current.records.filter(e=>replacementIds.has(e.sourceId));if(true){C(`글씨 읽는 중`),T(``);try{let n=await og(t,ae.current,e=>C(e)),r=n.records,detectedRecord=r.find(record=>/^20\d{2}-\d{2}-\d{2}$/.test(record.date)),detectedMonth=detectedRecord?((e||detectedRecord.date.slice(0,4))+detectedRecord.date.slice(4,7)):``,detectedName=r.find(record=>record.name?.trim())?.name?.trim()||``,detectedCamp=r.find(record=>record.camp?.trim())?.camp?.trim()||``,prior=ae.current,targetMonth=detectedMonth||prior.month;if(!targetMonth)throw Error(`문서에서 활동월을 읽지 못했습니다. 활동월을 직접 입력한 뒤 파일을 다시 읽어 주세요.`);const switchProject=prior.month!==targetMonth||!!(detectedName&&prior.name&&detectedName!==prior.name);if(switchProject&&prior.month&&(prior.records.length||prior.assets.length)){xh(prior);R(Sh())}let base=switchProject?(await bh(targetMonth,detectedName)||o_(targetMonth,detectedName,detectedCamp)):prior,i={...base,month:targetMonth,name:detectedName||base.name,camp:detectedCamp||(switchProject?``:base.camp),assets:base.assets.some(asset=>asset.id===t.id)?base.assets:[...base.assets,t]},a=i.month,o=a.slice(0,4);replacementIds=new Set(i.assets.filter(asset=>asset.kind===`source`&&sourceKey(asset.name)===sourceKey(t.name)).map(asset=>asset.id));a.slice(5,7);let s=new Date(+o,+a.slice(5),0).getDate(),c=new Map(i.records.map(e=>[e.date,e])),l=0;for(let t of r){if(t.date.startsWith(`2025-`)&&(t.warnings=[...t.warnings,`2025년이 들어가 있습니다. 원본 연도를 확인해 주세요.`]),t.date&&e){let n=t.date;t.date=e+t.date.slice(4),n!==t.date&&(t.warnings=[...t.warnings,`원본 날짜 ${n}의 연도를 직접 ${e}년으로 보정했습니다.`])}if(!t.date||t.date.slice(0,7)!==a){let e=t.date,n=await Te(t.sourcePage||1,a,e);/^\d{4}-\d{2}-\d{2}$/.test(n)&&n.slice(0,7)===a&&+n.slice(-2)>=1&&+n.slice(-2)<=s?(t.date=n,t.warnings=[...t.warnings,`활동 날짜를 직접 지정했습니다. 원본과 대조해 확인해 주세요.`]):(t.date=``,l++)}}let u=r.filter(e=>e.date.slice(0,7)===a&&+e.date.slice(-2)<=s);if(l&&T(`${l}쪽은 활동 날짜가 지정되지 않아 달력에 넣지 않았습니다. 올린 일지에서 다시 읽기를 눌러 날짜를 지정해 주세요.`),!u.length)throw Error(`파일에서 선택한 달의 날짜별 내용을 읽지 못했습니다. 월과 원본을 확인해 주세요.`);let importPlan=planJournalRecordImport(i.records,u);if(importPlan.collisions.length){const tripRepairs = switchProject ? [] : missingJournalTrips(i.records, u, t.id);
 const photoDates = new Set(n.photos.map(photo => photo.date));
 const occupiedPhotoDates = new Set(i.assets.filter(asset => asset.kind === 'photo').map(asset => asset.date));
-const photoRepairs = switchProject || !/\.hwpx?$/i.test(t.name) ? [] : i.records.filter(record =>
-  record.sourceId === t.id && photoDates.has(record.date) && !occupiedPhotoDates.has(record.date));
+const samePerson = !!detectedName && base.name === detectedName;
+const photoRepairs = !/\.hwpx?$/i.test(t.name) ? [] : i.records.filter(record =>
+  (record.sourceId === t.id || samePerson) && photoDates.has(record.date) && !occupiedPhotoDates.has(record.date));
 const mode = await chooseJournalImportMode(importPlan.collisions, tripRepairs.map(record => record.date), photoRepairs.map(record => record.date));
 if (mode === `cancel`) return;
 if (mode?.mode === `photos`) {
+  const current = ae.current;
+  if (current !== prior) return;
   const selected = new Set(mode.dates);
   const repairs = photoRepairs.filter(record => selected.has(record.date));
   const photos = await storeImportedJournalPhotos(t, repairs, n.photos.filter(photo => selected.has(photo.date)));
-  if (!photos.length || ae.current.month !== i.month || ae.current.name !== i.name) return;
-  ye(project => ({...project, assets: [...project.assets, ...photos.filter(photo =>
-    project.records.some(record => record.date === photo.date && record.sourceId === t.id) &&
-    !project.assets.some(asset => asset.kind === 'photo' && asset.date === photo.date))]}));
+  if (!photos.length || ae.current !== current) return;
+  const project = switchProject ? base : current;
+  const sourceAssets = project.assets.some(asset => asset.id === t.id) ? [] : [{...t, pageCount: n.pageCount}];
+  const repairedProject = {...project, assets: [...project.assets, ...sourceAssets, ...photos]};
+  ae.current = repairedProject;
+  ye(() => repairedProject);
+  ee(repairedProject.name);
+  setSavedJournalMonth(repairedProject.month);
   d(Number(photos[0].date.slice(-2)));
   I(`photos`);
   tp.success(`출장사진 ${photos.length}장을 가져왔습니다. 확인 후 작업 저장을 눌러 주세요.`);
