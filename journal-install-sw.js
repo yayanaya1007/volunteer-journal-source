@@ -7,6 +7,6 @@ self.addEventListener('fetch', event => {
   const base = new URL('./', self.location.href);
   if (event.request.method === 'GET' && url.origin === base.origin &&
       (url.pathname === base.pathname || url.pathname === new URL('index.html', base).pathname)) {
-    event.respondWith(fetch(event.request));
+    event.respondWith(fetch(event.request, { cache: 'no-cache' }));
   }
 });
