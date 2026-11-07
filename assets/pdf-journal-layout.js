@@ -1,5 +1,5 @@
 import {readActivityTimeRanges} from './journal-activity-time-import.js?v=20261104-top-time-v1';
-import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261104-trip-bare-hours-v3';
+import {tripTimeRanges,tripEntriesFromCells} from './journal-trip-import.js?v=20261107-shared-hour-v4';
 const compact = value => value.replace(/\s/g, '');
 const range = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 const center = item => item.x + item.width / 2;

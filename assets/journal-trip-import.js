@@ -1,8 +1,9 @@
 import {isDetailTimeCell,stripLeadingDetailTime,readActivityTimeRanges} from './journal-activity-time-import.js?v=20261104-top-time-v1';
 const timeRange = /(?<!\d)(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?\s*[~～∼〜–－-]\s*(\d{1,2})\s*(?::|시)\s*(\d{2})\s*분?(?!\d)/g;
 export function tripTimeRanges(text) {
-  // Bare hours are accepted only as a complete line inside the trip section.
-  const normalized=String(text).replace(/^\s*(\d{1,2})\s*[~～∼〜–－-]\s*(\d{1,2})\s*$/gm,(_,start,end)=>`${start}시~${end}시`);
+  // A shared 시 suffix (13~17시) also marks an hour-only trip range.
+  const normalized = String(text).replace(/^[ \t]*(\d{1,2})[ \t]*시?[ \t]*[~～∼〜–－-][ \t]*(\d{1,2})[ \t]*시?[ \t]*$/gm,
+    (_, start, end) => `${start}시~${end}시`);
   return readActivityTimeRanges(normalized);
 }
 function joinSplitTimeCells(values) {

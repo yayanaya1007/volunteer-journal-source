@@ -13,7 +13,14 @@ export function keepJournalImportAsset(asset, plan, replacementIds) {
   return !(plan.mode === 'overwrite' && ['photo', 'source-signature'].includes(asset.kind) && replacementIds.has(asset.sourceId || '') && plan.accepted.some(record => record.date === asset.date));
 }
 
-export function chooseJournalImportMode(dates) {
+export function missingJournalTrips(existing, incoming, sourceId) {
+  const sourceTrips = new Map(incoming.filter(record => record.sourceId === sourceId && record.trips?.length)
+    .map(record => [record.date, record.trips]));
+  return existing.filter(record => record.sourceId === sourceId && !record.trips?.length && sourceTrips.has(record.date))
+    .map(record => ({...record, trips: sourceTrips.get(record.date), reviewed: false}));
+}
+
+export function chooseJournalImportMode(dates, missingTripCount = 0) {
   return new Promise(resolve => {
     const dialog = document.createElement('dialog');
     dialog.className = 'journal-import-choice';
@@ -24,7 +31,10 @@ export function chooseJournalImportMode(dates) {
     const actions = document.createElement('div'); actions.className = 'journal-import-choice-actions';
     let settled = false;
     const finish = mode => { if (settled) return; settled = true; dialog.close(); dialog.remove(); resolve(mode); };
-    for (const [mode, label] of [['empty', '비어 있는 날짜만 넣기'], ['overwrite', '덮어쓰기'], ['cancel', '취소']]) {
+    const choices = [['empty', '비어 있는 날짜만 넣기']];
+    if (missingTripCount) choices.push(['trips', `빈 출장내역만 채우기 (${missingTripCount}일)`]);
+    choices.push(['overwrite', '덮어쓰기'], ['cancel', '취소']);
+    for (const [mode, label] of choices) {
       const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
       if (mode === 'empty') { button.className = 'primary'; button.autofocus = true; }
       button.addEventListener('click', () => finish(mode)); actions.appendChild(button);
