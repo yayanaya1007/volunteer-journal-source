@@ -16,7 +16,8 @@ export function focusJournalValidation(message, doc = document) {
     label.querySelector('span')?.textContent.trim().startsWith(name))?.querySelector('input, textarea, select, button');
   const button = text => [...pane.querySelectorAll('button')].find(node => node.textContent.includes(text));
   let target;
-  if (message.includes('세부활동 구분')) target = pane.querySelector('input[type="checkbox"]');
+  if (message.includes('활동유형을 하나 이상')) target = pane.querySelector('.activity-types [role="checkbox"]');
+  else if (message.includes('세부활동 구분')) target = pane.querySelector('input[type="checkbox"]');
   else if (message.includes('활동일자')) target = pane.querySelector('.recognized-date input');
   else if (message.includes('활동가 이름을 확인')) target = pane.querySelector('[role="checkbox"]');
   else if (message.includes('활동가 이름')) target = field('활동가 성명');
