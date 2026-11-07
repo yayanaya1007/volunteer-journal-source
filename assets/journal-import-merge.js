@@ -20,7 +20,7 @@ export function missingJournalTrips(existing, incoming, sourceId) {
     .map(record => ({...record, trips: sourceTrips.get(record.date), reviewed: false}));
 }
 
-export function chooseJournalImportMode(dates, missingTripCount = 0) {
+export function chooseJournalImportMode(dates, missingTripDates = []) {
   return new Promise(resolve => {
     const dialog = document.createElement('dialog');
     dialog.className = 'journal-import-choice';
@@ -31,13 +31,49 @@ export function chooseJournalImportMode(dates, missingTripCount = 0) {
     const actions = document.createElement('div'); actions.className = 'journal-import-choice-actions';
     let settled = false;
     const finish = mode => { if (settled) return; settled = true; dialog.close(); dialog.remove(); resolve(mode); };
+    const showTripDates = () => {
+      heading.textContent = '빈 출장내역을 채울 날짜 선택';
+      help.textContent = '원본에 출장내역이 있고, 일지의 출장내역이 비어 있는 날짜입니다.';
+      note.textContent = '체크한 날짜의 출장내역만 채웁니다. 이미 입력한 출장내역과 활동내용·사진·서명은 유지합니다.';
+      const list = document.createElement('fieldset');
+      list.className = 'journal-trip-repair-dates';
+      const legend = document.createElement('legend');
+      legend.textContent = '채울 날짜';
+      list.append(legend);
+      const selected = new Set();
+      const apply = document.createElement('button');
+      apply.type = 'button';
+      apply.className = 'primary';
+      apply.textContent = '선택한 빈 출장내역 채우기';
+      apply.disabled = true;
+      apply.addEventListener('click', () => finish({mode: 'trips', dates: [...selected]}));
+      for (const date of missingTripDates) {
+        const label = document.createElement('label');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.addEventListener('change', () => {
+          if (checkbox.checked) selected.add(date);
+          else selected.delete(date);
+          apply.disabled = selected.size === 0;
+        });
+        label.append(checkbox, date);
+        list.append(label);
+      }
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.textContent = '취소';
+      cancel.addEventListener('click', () => finish('cancel'));
+      actions.replaceChildren(apply, cancel);
+      dialog.insertBefore(list, actions);
+      list.querySelector('input')?.focus();
+    };
     const choices = [['empty', '비어 있는 날짜만 넣기']];
-    if (missingTripCount) choices.push(['trips', `빈 출장내역만 채우기 (${missingTripCount}일)`]);
+    if (missingTripDates.length) choices.push(['trips', `빈 출장내역 날짜 선택 (${missingTripDates.length}일)`]);
     choices.push(['overwrite', '덮어쓰기'], ['cancel', '취소']);
     for (const [mode, label] of choices) {
       const button = document.createElement('button'); button.type = 'button'; button.textContent = label;
       if (mode === 'empty') { button.className = 'primary'; button.autofocus = true; }
-      button.addEventListener('click', () => finish(mode)); actions.appendChild(button);
+      button.addEventListener('click', mode === 'trips' ? showTripDates : () => finish(mode)); actions.appendChild(button);
     }
     dialog.addEventListener('cancel', event => { event.preventDefault(); finish('cancel'); });
     dialog.addEventListener('close', () => finish('cancel'));
