@@ -15,6 +15,13 @@ export function focusJournalValidation(message, doc = document) {
   const field = name => [...pane.querySelectorAll('label.field')].find(label =>
     label.querySelector('span')?.textContent.trim().startsWith(name))?.querySelector('input, textarea, select, button');
   const button = text => [...pane.querySelectorAll('button')].find(node => node.textContent.includes(text));
+  const countName = /^(.+?) 칸에(?:는)? /.exec(message)?.[1];
+  if (countName) {
+    const input = [...pane.querySelectorAll('input[data-activity-count]')].find(node => node.dataset.activityCount === countName);
+    if (!input || (input.getAttribute('aria-required') !== 'true' && !input.value.trim())) return false;
+    input.scrollIntoView({block:'center',behavior:'auto'});
+    return true;
+  }
   let target;
   if (message.includes('활동유형을 하나 이상')) target = pane.querySelector('.activity-types [role="checkbox"]');
   else if (message.includes('세부활동 구분')) target = pane.querySelector('input[type="checkbox"]');
@@ -33,7 +40,6 @@ export function focusJournalValidation(message, doc = document) {
       input.closest('label')?.querySelector('span')?.textContent.includes('종료시간'));
   }
   else if (message.includes('활동시간') || message.includes('시작·종료 시간')) target = [...pane.querySelectorAll('input[type="time"]')].find(input => !input.closest('.trip-edit') && !input.value) || field('시작시간');
-  else if (message.includes(' 칸')) target = field(message.split(' 칸')[0]);
   if (!target) return false;
   target.scrollIntoView({block:'center',behavior:'auto'});
   // A time input seeds a default on focus. Validation must not fill it in.

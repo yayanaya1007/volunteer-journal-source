@@ -1,2 +1,5 @@
 /* Expanding fields or validation notices must not change the user's scroll position. */
 .workspace, dialog, [role="dialog"] { overflow-anchor: none; }
+
+/* The floating message contains no controls and must not intercept form clicks. */
+.journal-sticky-notice { pointer-events: none; }
