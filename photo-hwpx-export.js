@@ -13,7 +13,7 @@ function pictureNode(doc, slot, width, height) {
 }
 
 export async function saveHangul({photos,count,activity,date}) {
-  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=header12pt`,import.meta.url));
+  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=titlebatang1`,import.meta.url));
   if (!response.ok) throw Error('양식을 열 수 없어요.');
   const files = unzipSync(new Uint8Array(await response.arrayBuffer()));
   const sectionKey='Contents/section0.xml', packageKey='Contents/content.hpf';
