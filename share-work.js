@@ -118,8 +118,29 @@
   function validateManifest(manifest) {
     if (!manifest || manifest.format !== FORMAT || manifest.version !== 1 || !manifest.project || !/^20\d{2}-(0[1-9]|1[0-2])$/.test(manifest.project.month) || !Array.isArray(manifest.project.records) || !Array.isArray(manifest.project.assets)) throw new Error('활동일지 앱에서 만든 작업 공유 파일이 아닙니다.');
   }
+  // Android file sharing accepts plain text. Encode the actual backup in bounded chunks.
+  const textHeader = 'VOLUNTEER-JOURNAL/1\n';
+  const chunkSize = 48 * 1024;
+  async function mobileBackup(archive, filename) {
+    const parts = [textHeader];
+    for (let offset = 0; offset < archive.size; offset += chunkSize) {
+      const bytes = new Uint8Array(await archive.slice(offset, offset + chunkSize).arrayBuffer());
+      parts.push(btoa(String.fromCharCode(...bytes)), '\n');
+    }
+    return new File(parts, filename + '.txt', { type: 'text/plain' });
+  }
+  async function unwrapBackup(file) {
+    if (await file.slice(0, textHeader.length).text() !== textHeader) return file;
+    const parts = [];
+    const lineSize = chunkSize / 3 * 4 + 1;
+    for (let offset = textHeader.length; offset < file.size; offset += lineSize) {
+      const line = await file.slice(offset, offset + lineSize).text();
+      parts.push(Uint8Array.from(atob(line.trim()), character => character.charCodeAt(0)));
+    }
+    return new Blob(parts);
+  }
   async function importProject(file) {
-    const entries = await readZip(file), raw = entries.get('work.json'); if (!raw) throw new Error('작업 정보가 들어 있지 않습니다.');
+    const entries = await readZip(await unwrapBackup(file)), raw = entries.get('work.json'); if (!raw) throw new Error('작업 정보가 들어 있지 않습니다.');
     const manifest = JSON.parse(decoder.decode(raw)); validateManifest(manifest);
     const project = manifest.project, target = savedProjects().find(entry => entry.project.month === project.month && (entry.project.name || '') === (project.name || ''));
     if (target && !confirm(`${project.month} ${project.name || '이름 미입력'} 작업이 이미 있습니다. 기존 활동일지와 운영현황을 공유 파일 내용으로 바꿀까요?`)) return false;
@@ -153,67 +174,58 @@
     const open = document.createElement('button'); open.type = 'button'; open.className = 'share-work-button'; open.textContent = '작업 공유·가져오기'; open.setAttribute('aria-haspopup', 'dialog');
     tools.append(open); header.insertBefore(tools, privateLabel);
     const modal = document.createElement('section'); modal.id = 'share-work-dialog'; modal.className = 'share-work-backdrop'; modal.hidden = true; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'share-work-title');
-    modal.innerHTML = `<div class="share-work-card"><button type="button" class="share-work-close" aria-label="닫기">×</button><p class="eyebrow">작업 파일 공유</p><h2 id="share-work-title">사진과 운영현황까지 한 파일로</h2><p>저장한 월별 활동일지, 원본 PDF·한글파일, 날짜별 사진과 서명, 해당 월의 거점운영현황을 묶습니다. 받은 사람은 이 파일을 불러와 계속 편집한 다음 한글파일·엑셀·PDF로 저장할 수 있습니다.</p><label class="share-work-label">공유할 저장 작업<select id="share-work-project"></select></label><div class="share-work-actions"><button type="button" id="share-work-kakao" class="share-work-primary">카카오톡으로 보내기</button><button type="button" id="share-work-export" class="share-work-primary">파일 다운로드</button><label for="share-work-file" class="share-work-secondary">받은 작업 파일 가져오기</label><input id="share-work-file" type="file" accept=".vjournal,.zip,application/zip" hidden><button type="button" id="share-work-apply" class="share-work-primary" hidden>확인</button></div><p id="share-work-status" role="status" aria-live="polite"></p></div>`;
+    modal.innerHTML = `<div class="share-work-card"><button type="button" class="share-work-close" aria-label="닫기">×</button><p class="eyebrow">작업 파일 공유</p><h2 id="share-work-title">사진과 운영현황까지 한 파일로</h2><p>저장한 월별 활동일지, 원본 PDF·한글파일, 날짜별 사진과 서명, 해당 월의 거점운영현황을 묶습니다. 받은 사람은 이 파일을 불러와 계속 편집한 다음 한글파일·엑셀·PDF로 저장할 수 있습니다.</p><label class="share-work-label">공유할 저장 작업<select id="share-work-project"></select></label><div class="share-work-actions"><button type="button" id="share-work-kakao" class="share-work-primary">카카오톡으로 보내기</button><button type="button" id="share-work-export" class="share-work-primary">파일 다운로드</button><label for="share-work-file" class="share-work-secondary">받은 작업 파일 가져오기</label><input id="share-work-file" type="file" accept=".vjournal,.zip,.txt,text/plain,application/zip" hidden><button type="button" id="share-work-apply" class="share-work-primary" hidden>확인</button></div><p id="share-work-status" role="status" aria-live="polite"></p></div>`;
     document.body.append(modal);
     const select = modal.querySelector('#share-work-project');
     const shareButton = modal.querySelector('#share-work-kakao');
     let preparedShare = null;
-    const manualShare = '파일 다운로드로 저장한 뒤, 휴대폰의 내 파일 → 다운로드에서 작업 파일을 길게 누르고 공유 → 카카오톡을 선택해 주세요.';
-    function offerZip() {
-      const original = preparedShare.file;
-      const zip = new File([original], original.name + '.zip', { type: 'application/zip' });
-      if (!navigator.canShare({ files: [zip] })) {
-        setStatus(manualShare, true);
-        return;
-      }
-      preparedShare.zip = zip;
-      shareButton.textContent = 'ZIP으로 카카오톡 공유';
-      setStatus('휴대폰이 원래 형식의 공유를 허용하지 않았어요. ZIP으로 보내면 받는 분은 압축을 풀지 않고 그대로 가져올 수 있어요. 원래 이름으로 보내려면 ' + manualShare);
-    }
+    let generation = 0;
     function resetShare() {
+      generation++;
       preparedShare = null;
-      shareButton.textContent = '카카오톡으로 보내기';
+      shareButton.disabled = true;
     }
-    select.addEventListener('change', resetShare);
-    shareButton.addEventListener('click', async () => {
+    async function prepareShare() {
+      resetShare();
+      const current = generation;
       const key = select.value;
       const saved = key && localStorage.getItem(key);
-      if (!saved) { setStatus('먼저 월별 작업의 저장 버튼을 눌러 주세요.', true); return; }
-      if (typeof navigator.share !== 'function' || typeof navigator.canShare !== 'function') {
-        setStatus('파일 다운로드를 누른 뒤 카카오톡에서 파일을 첨부해 주세요.', true);
+      if (!saved) return;
+      shareButton.textContent = '파일 준비 중';
+      setStatus('');
+      try {
+        const project = JSON.parse(saved);
+        const archive = await buildProjectArchive(project);
+        const filename = makeFilename(project);
+        const file = /Android/i.test(navigator.userAgent)
+          ? await mobileBackup(archive, filename)
+          : new File([archive], filename, { type: 'application/octet-stream' });
+        if (current !== generation) return;
+        preparedShare = file;
+        shareButton.disabled = false;
+      } catch (error) {
+        if (current === generation) setStatus(error.message || '파일을 준비하지 못했어요.', true);
+      } finally {
+        if (current === generation) shareButton.textContent = '카카오톡으로 보내기';
+      }
+    }
+    select.addEventListener('change', prepareShare);
+    shareButton.addEventListener('click', async () => {
+      const file = preparedShare;
+      if (!file) return;
+      if (!navigator.canShare?.({ files: [file] })) {
+        setStatus('이 화면에서는 파일 공유를 열 수 없어요.', true);
         return;
       }
       shareButton.disabled = true;
       try {
-        if (preparedShare?.key !== key || preparedShare.saved !== saved) {
-          setStatus('공유할 파일을 만드는 중이에요.');
-          const project = JSON.parse(saved);
-          const archive = await buildProjectArchive(project);
-          if (modal.hidden || select.value !== key || localStorage.getItem(key) !== saved) return;
-          const file = new File([archive], makeFilename(project), { type: 'application/octet-stream' });
-          preparedShare = { key, saved, file };
-          if (!navigator.canShare({ files: [file] })) {
-            offerZip();
-            return;
-          }
-          shareButton.textContent = '공유 화면 열기';
-        }
-        if (navigator.userActivation?.isActive === false) {
-          setStatus('공유 화면 열기를 누르고 카카오톡을 선택해 주세요.');
-          return;
-        }
-        await navigator.share({ files: [preparedShare.zip || preparedShare.file] });
-        setStatus('받는 분은 받은 작업 파일 가져오기에서 파일을 선택하면 돼요.');
+        await navigator.share({ files: [file] });
+        if (file === preparedShare) setStatus('받는 분은 받은 작업 파일 가져오기에서 이 파일을 선택해 주세요.');
       } catch (error) {
-        if (error.name === 'NotAllowedError' || /permission denied/i.test(error.message)) {
-          if (preparedShare && !preparedShare.zip) offerZip();
-          else setStatus(manualShare, true);
-        } else if (error.name === 'AbortError' && preparedShare) {
-          setStatus('공유가 취소됐어요. 다시 보내려면 공유 버튼을 눌러 주세요.');
-        } else {
-          setStatus(error.message || '공유 파일을 보내지 못했어요. 다시 시도해 주세요.', true);
-        }
-      } finally { shareButton.disabled = false; }
+        if (file === preparedShare) setStatus(error.name === 'AbortError' ? '공유가 취소됐어요.' : '휴대폰에서 파일 공유를 열지 못했어요.', error.name !== 'AbortError');
+      } finally {
+        if (file === preparedShare) shareButton.disabled = false;
+      }
     });
     let pendingImport = null;
     const applyImported = modal.querySelector('#share-work-apply');
@@ -224,7 +236,7 @@
       if (!items.length) { const option = document.createElement('option'); option.value = ''; option.textContent = '저장한 작업이 없습니다'; select.append(option); }
     }
     const close = () => { modal.hidden = true; resetShare(); };
-    open.addEventListener('click', () => { refresh(); modal.hidden = false; modal.querySelector('.share-work-close').focus(); });
+    open.addEventListener('click', () => { refresh(); modal.hidden = false; prepareShare(); modal.querySelector('.share-work-close').focus(); });
     modal.querySelector('.share-work-close').addEventListener('click', close);
     applyImported.addEventListener('click', () => {
       if (!pendingImport) return;
