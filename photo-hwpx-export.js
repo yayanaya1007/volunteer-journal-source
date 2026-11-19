@@ -43,8 +43,9 @@ export async function saveHangul({photos,count,activity,date}) {
     for(const [key,value] of Object.entries({id:'photo'+i,href:filename,'media-type':'image/jpeg',isEmbeded:'1'}))item.setAttribute(key,value);
     manifest.appendChild(item);
     const size=first(cell,'cellSz'), margin=first(cell,'cellMargin');
-    const inset=k=>Number(margin?.getAttribute(k)||0);
-    const scale=Math.min((size.getAttribute('width')-inset('left')-inset('right')-300)/canvas.width,(size.getAttribute('height')-inset('top')-inset('bottom')-400)/canvas.height);
+    cell.setAttribute('hasMargin','1');
+    for (const edge of ['top','bottom','left','right']) margin.setAttribute(edge,'0');
+    const scale=Math.min(Number(size.getAttribute('width'))/canvas.width,Number(size.getAttribute('height'))/canvas.height);
     const paragraph = first(cell, 'p');
     paragraph.setAttribute('paraPrIDRef', count === 3 ? '0' : '2');
     first(cell, 'subList').setAttribute('vertAlign', 'CENTER');
