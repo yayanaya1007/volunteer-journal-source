@@ -24,7 +24,7 @@ export async function saveHangul({photos,count,activity,date}) {
   dateCell.textContent = '● 일시: ' + date;
   const dateHeader = all(section, 'tc').find(cell => cell.contains(dateCell));
   dateHeader.setAttribute('hasMargin', '1');
-  first(dateHeader, 'cellMargin').setAttribute('right', '850'); // 3 mm in Hangul units
+  first(dateHeader, 'cellMargin').setAttribute('right', '1417'); // 5 mm in Hangul units
   const rows=all(section,'tr');
   for(let i=0;i<count;i++){
     if(!photos[i]) continue;
