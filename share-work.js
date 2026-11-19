@@ -178,7 +178,7 @@
           const project = JSON.parse(saved);
           const archive = await buildProjectArchive(project);
           if (modal.hidden || select.value !== key || localStorage.getItem(key) !== saved) return;
-          const file = new File([archive], makeFilename(project).replace(/\.vjournal$/, '.zip'), { type: 'application/zip' });
+          const file = new File([archive], makeFilename(project), { type: 'application/octet-stream' });
           if (!navigator.canShare({ files: [file] })) {
             setStatus('이 브라우저에서는 바로 공유하기가 지원되지 않아요. 파일 다운로드를 눌러 주세요.', true);
             return;
