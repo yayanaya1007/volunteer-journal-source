@@ -13,7 +13,7 @@ function pictureNode(doc, slot, width, height) {
 }
 
 export async function saveHangul({photos,count,activity,date}) {
-  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=datecolumn2`,import.meta.url));
+  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=rightdate1`,import.meta.url));
   if (!response.ok) throw Error('양식을 열 수 없어요.');
   const files = unzipSync(new Uint8Array(await response.arrayBuffer()));
   const sectionKey='Contents/section0.xml', packageKey='Contents/content.hpf';
@@ -21,7 +21,7 @@ export async function saveHangul({photos,count,activity,date}) {
   const details=all(section,'t').find(t=>t.textContent==='{{details}}');
   const dateCell = all(section,'t').find(t => t.textContent === '{{date}}');
   details.textContent = (count === 3 ? ' ● 봉사내용:  ' : '') + activity;
-  dateCell.textContent = '● 일 시:  ' + date;
+  dateCell.textContent = '● 일시: ' + date;
   const rows=all(section,'tr');
   for(let i=0;i<count;i++){
     if(!photos[i]) continue;
