@@ -158,6 +158,18 @@
     const select = modal.querySelector('#share-work-project');
     const shareButton = modal.querySelector('#share-work-kakao');
     let preparedShare = null;
+    const manualShare = '파일 다운로드로 저장한 뒤, 휴대폰의 내 파일 → 다운로드에서 작업 파일을 길게 누르고 공유 → 카카오톡을 선택해 주세요.';
+    function offerZip() {
+      const original = preparedShare.file;
+      const zip = new File([original], original.name + '.zip', { type: 'application/zip' });
+      if (!navigator.canShare({ files: [zip] })) {
+        setStatus(manualShare, true);
+        return;
+      }
+      preparedShare.zip = zip;
+      shareButton.textContent = 'ZIP으로 카카오톡 공유';
+      setStatus('휴대폰이 원래 형식의 공유를 허용하지 않았어요. ZIP으로 보내면 받는 분은 압축을 풀지 않고 그대로 가져올 수 있어요. 원래 이름으로 보내려면 ' + manualShare);
+    }
     function resetShare() {
       preparedShare = null;
       shareButton.textContent = '카카오톡으로 보내기';
@@ -179,22 +191,25 @@
           const archive = await buildProjectArchive(project);
           if (modal.hidden || select.value !== key || localStorage.getItem(key) !== saved) return;
           const file = new File([archive], makeFilename(project), { type: 'application/octet-stream' });
+          preparedShare = { key, saved, file };
           if (!navigator.canShare({ files: [file] })) {
-            setStatus('이 브라우저에서는 바로 공유하기가 지원되지 않아요. 파일 다운로드를 눌러 주세요.', true);
+            offerZip();
             return;
           }
-          preparedShare = { key, saved, file };
           shareButton.textContent = '공유 화면 열기';
         }
         if (navigator.userActivation?.isActive === false) {
           setStatus('공유 화면 열기를 누르고 카카오톡을 선택해 주세요.');
           return;
         }
-        await navigator.share({ files: [preparedShare.file] });
+        await navigator.share({ files: [preparedShare.zip || preparedShare.file] });
         setStatus('받는 분은 받은 작업 파일 가져오기에서 파일을 선택하면 돼요.');
       } catch (error) {
-        if (error.name === 'AbortError' && preparedShare) {
-          setStatus('다시 보내려면 공유 화면 열기를 눌러 주세요.');
+        if (error.name === 'NotAllowedError' || /permission denied/i.test(error.message)) {
+          if (preparedShare && !preparedShare.zip) offerZip();
+          else setStatus(manualShare, true);
+        } else if (error.name === 'AbortError' && preparedShare) {
+          setStatus('공유가 취소됐어요. 다시 보내려면 공유 버튼을 눌러 주세요.');
         } else {
           setStatus(error.message || '공유 파일을 보내지 못했어요. 다시 시도해 주세요.', true);
         }
