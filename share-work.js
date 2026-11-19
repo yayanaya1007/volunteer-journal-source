@@ -309,8 +309,7 @@
     const android = /Android/i.test(navigator.userAgent);
     // Android maps accept extensions to MIME types; unknown ".vjournal" files would be greyed out.
     if (android) modal.querySelector('#share-work-file').removeAttribute('accept');
-    // On Android the share button sends the file directly; show saving only when sharing is blocked.
-    if (android) { downloadButton.textContent = '작업 파일 저장'; downloadButton.hidden = true; }
+    if (android) downloadButton.textContent = '파일 다운로드 후 카카오톡 공유';
     const chromeLink = document.createElement('a');
     chromeLink.className = 'share-work-secondary';
     chromeLink.textContent = 'Chrome에서 다운로드한 파일 공유';
@@ -322,7 +321,7 @@
       needsChrome = true;
       chromeLink.style.display = '';
       shareButton.hidden = true;
-      downloadButton.hidden = false;
+      downloadButton.textContent = '작업 파일 저장';
       setStatus('이 화면에서는 파일을 직접 보낼 수 없어요. 이미 저장했다면 Chrome에서 다운로드한 파일 공유를 눌러 주세요.');
     }
     let preparedShare = null;
@@ -332,7 +331,7 @@
       needsChrome = false;
       chromeLink.style.display = 'none';
       shareButton.hidden = false;
-      if (android) downloadButton.hidden = true;
+      if (android) downloadButton.textContent = '파일 다운로드 후 카카오톡 공유';
       preparedShare = null;
       if (android) downloadButton.disabled = true;
       shareButton.disabled = true;
