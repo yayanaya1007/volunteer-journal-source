@@ -178,11 +178,15 @@
     document.body.append(modal);
     const select = modal.querySelector('#share-work-project');
     const shareButton = modal.querySelector('#share-work-kakao');
+    const downloadButton = modal.querySelector('#share-work-export');
+    const android = /Android/i.test(navigator.userAgent);
+    if (android) downloadButton.textContent = '파일 다운로드 후 카카오톡 공유';
     let preparedShare = null;
     let generation = 0;
     function resetShare() {
       generation++;
       preparedShare = null;
+      if (android) downloadButton.disabled = true;
       shareButton.disabled = true;
     }
     async function prepareShare() {
@@ -197,11 +201,12 @@
         const project = JSON.parse(saved);
         const archive = await buildProjectArchive(project);
         const filename = makeFilename(project);
-        const file = /Android/i.test(navigator.userAgent)
+        const file = android
           ? await mobileBackup(archive, filename)
           : new File([archive], filename, { type: 'application/octet-stream' });
         if (current !== generation) return;
         preparedShare = file;
+        if (android) downloadButton.disabled = false;
         shareButton.disabled = false;
       } catch (error) {
         if (current === generation) setStatus(error.message || '파일을 준비하지 못했어요.', true);
@@ -210,7 +215,7 @@
       }
     }
     select.addEventListener('change', prepareShare);
-    shareButton.addEventListener('click', async () => {
+    async function sharePreparedFile() {
       const file = preparedShare;
       if (!file) return;
       if (!navigator.canShare?.({ files: [file] })) {
@@ -218,15 +223,20 @@
         return;
       }
       shareButton.disabled = true;
+      if (android) downloadButton.disabled = true;
       try {
         await navigator.share({ files: [file] });
         if (file === preparedShare) setStatus('받는 분은 받은 작업 파일 가져오기에서 이 파일을 선택해 주세요.');
       } catch (error) {
         if (file === preparedShare) setStatus(error.name === 'AbortError' ? '공유가 취소됐어요.' : '휴대폰에서 파일 공유를 열지 못했어요.', error.name !== 'AbortError');
       } finally {
-        if (file === preparedShare) shareButton.disabled = false;
+        if (file === preparedShare) {
+          shareButton.disabled = false;
+          if (android) downloadButton.disabled = false;
+        }
       }
-    });
+    }
+    shareButton.addEventListener('click', sharePreparedFile);
     let pendingImport = null;
     const applyImported = modal.querySelector('#share-work-apply');
     function refresh() {
@@ -246,7 +256,21 @@
     });
     modal.addEventListener('click', event => { if (event.target === modal) close(); });
     window.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) close(); });
-    modal.querySelector('#share-work-export').addEventListener('click', async () => {
+    downloadButton.addEventListener('click', async () => {
+      if (android) {
+        const file = preparedShare;
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.name;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        await sharePreparedFile();
+        return;
+      }
       const item = savedProjects().find(entry => entry.key === select.value); if (!item) { setStatus('먼저 월별 작업의 저장 버튼을 눌러 주세요.', true); return; }
       const button = modal.querySelector('#share-work-export'); button.disabled = true;
       try { await exportProject(item.project); } catch (error) { setStatus(error.message || '공유 파일을 만들지 못했습니다.', true); } finally { button.disabled = false; }
