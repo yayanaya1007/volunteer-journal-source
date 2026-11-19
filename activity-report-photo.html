@@ -38,6 +38,7 @@
     @media(max-width:640px){.photo-count-select{width:100%}.photo-count-options{width:100%}.photo-count-options label{flex:1}.photo-count-options span{width:100%}.toolbar{height:64px}.brand b{font-size:12px}.brand small{font-size:8px}.brand-mark{width:32px;height:32px}.settings{width:calc(100% - 24px);padding:13px;gap:10px}.settings label{min-width:180px}.settings .date{min-width:140px}.footer{width:calc(100% - 24px);align-items:flex-start;flex-direction:column}.reset{margin:0}}
     @media print{@page{size:A4 portrait;margin:0}body{background:#fff}.screen-only{display:none!important}.canvas-wrap{display:block;overflow:visible;padding:0}.page{width:210mm;min-width:0;height:297mm;margin:0;padding:20mm 18mm 15mm;box-shadow:none;page-break-after:always;break-after:page}.page.grid-page{width:210mm;height:297mm;margin:0;padding:20mm 18mm 15mm;page-break-after:always;break-after:page}.page.grid-page .frame{height:auto}.page:last-child{page-break-after:auto;break-after:auto}.frame{height:246mm}.empty{display:none!important}.page.grid-page .slot.active:not(.filled){outline:0}}
   .page:not(.grid-page) .frame{width:171.55mm;height:240.40mm;max-width:100%}
+  .report-note{margin:0;padding-left:0.5mm;font:10pt/6mm "나눔고딕","Nanum Gothic","Malgun Gothic",sans-serif}
   </style>
 </head>
 <body>
@@ -79,6 +80,7 @@
         const article=make('article',`page${photoCount===3?'':` grid-page mode-${photoCount}`}`);
         article.setAttribute('aria-label',`활동보고서 사진 ${photoCount}장 인쇄 미리보기`);
         article.append(make('h1','', '자원봉사 활동사진'));
+        if(photoCount===3) article.append(make('p','report-note','※ 활동 사진 및 참여 자원봉사자(전원) 단체 사진 1장 필수 첨부'));
         const frame=make('section','frame');
         const heading=make('header','heading');
         const activityLine=make('div');activityLine.append(make('b','', '● 봉사내용:'),make('span','',activity.value));
