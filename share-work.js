@@ -180,14 +180,32 @@
     const shareButton = modal.querySelector('#share-work-kakao');
     const downloadButton = modal.querySelector('#share-work-export');
     const android = /Android/i.test(navigator.userAgent);
-    if (android) downloadButton.textContent = '파일 다운로드 후 카카오톡 공유';
+    // Android Chrome refuses Web Share files over 50MB with a "Permission denied" error.
+    const ANDROID_SHARE_LIMIT = 49 * 1024 * 1024;
+    const megabytes = bytes => (bytes / 1024 / 1024).toFixed(1) + 'MB';
+    // Android maps accept extensions to MIME types; unknown ".vjournal" files would be greyed out.
+    if (android) modal.querySelector('#share-work-file').removeAttribute('accept');
     let preparedShare = null;
     let generation = 0;
     function resetShare() {
       generation++;
       preparedShare = null;
-      if (android) downloadButton.disabled = true;
+      downloadButton.disabled = android;
       shareButton.disabled = true;
+    }
+    function downloadOriginal(reason) {
+      const original = preparedShare?.original;
+      if (!original) return;
+      const url = URL.createObjectURL(original);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = original.name;
+      link.style.display = 'none';
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+      setStatus(`${reason ? reason + ' ' : ''}작업 파일(${original.name}, ${megabytes(original.size)})을 휴대폰의 다운로드 폴더에 저장했어요. 휴대폰의 ‘내 파일’ 앱 → 다운로드에서 이 파일을 길게 누른 뒤 공유 → 카카오톡을 선택해 보내 주세요. 받는 분은 ‘받은 작업 파일 가져오기’에서 이 파일을 선택하면 됩니다.`, Boolean(reason));
     }
     async function prepareShare() {
       resetShare();
@@ -201,12 +219,12 @@
         const project = JSON.parse(saved);
         const archive = await buildProjectArchive(project);
         const filename = makeFilename(project);
-        const file = android
-          ? await mobileBackup(archive, filename)
-          : new File([archive], filename, { type: 'application/octet-stream' });
+        const original = new File([archive], filename, { type: 'application/octet-stream' });
+        let file = original;
+        if (android) file = archive.size * 4 / 3 + 1024 < ANDROID_SHARE_LIMIT ? await mobileBackup(archive, filename) : null;
         if (current !== generation) return;
-        preparedShare = file;
-        if (android) downloadButton.disabled = false;
+        preparedShare = { file, original };
+        downloadButton.disabled = false;
         shareButton.disabled = false;
       } catch (error) {
         if (current === generation) setStatus(error.message || '파일을 준비하지 못했어요.', true);
@@ -216,23 +234,32 @@
     }
     select.addEventListener('change', prepareShare);
     async function sharePreparedFile() {
-      const file = preparedShare;
-      if (!file) return;
-      if (!navigator.canShare?.({ files: [file] })) {
-        setStatus('이 화면에서는 파일 공유를 열 수 없어요.', true);
+      const prepared = preparedShare;
+      if (!prepared) return;
+      const { file } = prepared;
+      if (!file) {
+        if (android) downloadOriginal(`작업 파일이 ${megabytes(prepared.original.size)}라 휴대폰 공유 한도(50MB)를 넘어서 바로 보낼 수 없어요.`);
+        return;
+      }
+      if (!navigator.share || !navigator.canShare?.({ files: [file] })) {
+        if (android) downloadOriginal('이 브라우저는 파일 바로 공유를 지원하지 않아요.');
+        else setStatus('이 화면에서는 파일 공유를 열 수 없어요. 파일 다운로드를 눌러 주세요.', true);
         return;
       }
       shareButton.disabled = true;
-      if (android) downloadButton.disabled = true;
+      downloadButton.disabled = true;
       try {
         await navigator.share({ files: [file] });
-        if (file === preparedShare) setStatus('받는 분은 받은 작업 파일 가져오기에서 이 파일을 선택해 주세요.');
+        if (prepared === preparedShare) setStatus('받는 분은 ‘받은 작업 파일 가져오기’에서 받은 파일을 선택해 주세요.');
       } catch (error) {
-        if (file === preparedShare) setStatus(error.name === 'AbortError' ? '공유가 취소됐어요.' : '휴대폰에서 파일 공유를 열지 못했어요.', error.name !== 'AbortError');
+        if (prepared !== preparedShare) return;
+        if (error.name === 'AbortError') setStatus('공유가 취소됐어요.');
+        else if (android) downloadOriginal(`휴대폰이 바로 공유를 막았어요(${error.name}: ${error.message}).`);
+        else setStatus(`휴대폰에서 파일 공유를 열지 못했어요(${error.name}). 파일 다운로드를 눌러 주세요.`, true);
       } finally {
-        if (file === preparedShare) {
+        if (prepared === preparedShare) {
           shareButton.disabled = false;
-          if (android) downloadButton.disabled = false;
+          downloadButton.disabled = false;
         }
       }
     }
@@ -257,20 +284,7 @@
     modal.addEventListener('click', event => { if (event.target === modal) close(); });
     window.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) close(); });
     downloadButton.addEventListener('click', async () => {
-      if (android) {
-        const file = preparedShare;
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = file.name;
-        document.body.append(link);
-        link.click();
-        link.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 60000);
-        await sharePreparedFile();
-        return;
-      }
+      if (android) { downloadOriginal(); return; }
       const item = savedProjects().find(entry => entry.key === select.value); if (!item) { setStatus('먼저 월별 작업의 저장 버튼을 눌러 주세요.', true); return; }
       const button = modal.querySelector('#share-work-export'); button.disabled = true;
       try { await exportProject(item.project); } catch (error) { setStatus(error.message || '공유 파일을 만들지 못했습니다.', true); } finally { button.disabled = false; }
