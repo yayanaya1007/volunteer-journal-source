@@ -1,10 +1,10 @@
 'use strict';
 const BASE = new URL('./', self.location.href);
 const PAGE = new URL('activity-report-photo.html', BASE);
-const CACHE = `activity-report-photo-cells-rightdategap5sp:${BASE.pathname}`;
+const CACHE = `activity-report-photo-cells-colonheader1:${BASE.pathname}`;
 const ASSETS = ['activity-report-photo.html', 'activity-report-photo-manifest.json',
-  'photo-hwpx-export.js?v=cell-rightdategap5sp', 'photo-hwpx/zip.mjs',
-  'photo-hwpx/form-3.hwpx?v=rightdate1', 'photo-hwpx/form-6.hwpx?v=rightdate1', 'photo-hwpx/form-8.hwpx?v=rightdate1',
+  'photo-hwpx-export.js?v=cell-colonheader1', 'photo-hwpx/zip.mjs',
+  'photo-hwpx/form-3.hwpx?v=colonheader1', 'photo-hwpx/form-6.hwpx?v=colonheader1', 'photo-hwpx/form-8.hwpx?v=colonheader1',
   'photo-install/install.js', 'photo-install/install.css',
   'photo-install/icon-192.png', 'photo-install/icon-512.png', 'photo-install/icon-180.png'];
 const PATHS = new Set(ASSETS.map(path => new URL(path, BASE).pathname));
