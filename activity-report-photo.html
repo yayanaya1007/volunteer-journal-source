@@ -49,7 +49,7 @@
     <div class="settings-intro"><b>사진 넣기</b><small>사진 수를 고른 뒤 사진 칸을 선택하세요. 붙여넣거나 사진을 골라도 전체가 보이도록 비율을 유지합니다.</small></div>
     <fieldset class="photo-count-select"><legend>사진 수</legend><div class="photo-count-options" role="radiogroup" aria-label="사진 수 선택"><label><input type="radio" name="photo-count" value="3" checked><span>3장</span></label><label><input type="radio" name="photo-count" value="6"><span>6장</span></label><label><input type="radio" name="photo-count" value="8"><span>8장</span></label></div></fieldset>
     <label><span>봉사내용</span><input id="activity" placeholder="예: 지역안전 및 야간순찰 방범활동"></label>
-    <label class="date"><span>일시</span><input id="date" type="date"></label>
+    <label class="date"><span>일 시</span><input id="date" type="date"></label>
   </section>
   <p class="message screen-only" id="message" role="status"></p>
   <div class="canvas-wrap"><div id="pages"></div></div>
@@ -105,7 +105,7 @@
         count.textContent=`${filled}/${photoCount}장 입력 · 사진 전체를 비율대로 표시합니다.`;
       };
       const place=(file,index)=>{if(!file.type.startsWith('image/'))return say('이미지 사진을 선택해 주세요.');if(photos[index])URL.revokeObjectURL(photos[index].url);photos[index]={url:URL.createObjectURL(file),name:file.name};active=index;render();say(`${index+1}번 사진 칸에 넣었습니다.`)};
-      document.getElementById('download-hangul').addEventListener('click',async()=>{const button=document.getElementById('download-hangul');button.disabled=true;say('한글 문서를 만들고 있어요.');try{const {saveHangul}=await import('./photo-hwpx-export.js?v=cell-rightdategap5');await saveHangul({photos:photos.slice(0,photoCount),count:photoCount,activity:activity.value,date:formatDate()});say('한글 문서를 저장했어요.');}catch(error){console.error(error);say('한글 문서를 만들지 못했어요. 다시 시도해 주세요.')}finally{button.disabled=false}});
+      document.getElementById('download-hangul').addEventListener('click',async()=>{const button=document.getElementById('download-hangul');button.disabled=true;say('한글 문서를 만들고 있어요.');try{const {saveHangul}=await import('./photo-hwpx-export.js?v=cell-rightdategap5sp');await saveHangul({photos:photos.slice(0,photoCount),count:photoCount,activity:activity.value,date:formatDate()});say('한글 문서를 저장했어요.');}catch(error){console.error(error);say('한글 문서를 만들지 못했어요. 다시 시도해 주세요.')}finally{button.disabled=false}});
       document.addEventListener('paste',event=>{const file=Array.from(event.clipboardData.items).find(item=>item.type.startsWith('image/'))?.getAsFile();if(file){event.preventDefault();place(file,active)}});
       activity.addEventListener('input',render);date.addEventListener('input',render);countChoices.forEach(choice=>choice.addEventListener('change',()=>{active=0;render();say(`${choice.value}장 사진 양식으로 바꿨습니다.`)}));
       const toggle=()=>{preview=!preview;document.body.classList.toggle('is-preview',preview);document.getElementById('preview-actions').hidden=!preview;document.getElementById('preview').textContent=preview?'편집으로':'미리보기';render()};

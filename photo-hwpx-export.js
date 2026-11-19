@@ -21,7 +21,7 @@ export async function saveHangul({photos,count,activity,date}) {
   const details=all(section,'t').find(t=>t.textContent==='{{details}}');
   const dateCell = all(section,'t').find(t => t.textContent === '{{date}}');
   details.textContent = (count === 3 ? ' ● 봉사내용:  ' : '') + activity;
-  dateCell.textContent = '● 일시: ' + date;
+  dateCell.textContent = '● 일 시: ' + date;
   const dateHeader = all(section, 'tc').find(cell => cell.contains(dateCell));
   dateHeader.setAttribute('hasMargin', '1');
   first(dateHeader, 'cellMargin').setAttribute('right', '1417'); // 5 mm in Hangul units
