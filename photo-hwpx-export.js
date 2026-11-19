@@ -8,7 +8,7 @@ const serialize = doc => strToU8(new XMLSerializer().serializeToString(doc));
 function pictureNode(doc, slot, width, height) {
   const ns = doc.documentElement.lookupNamespaceURI('hp');
   const core = doc.documentElement.lookupNamespaceURI('hc');
-  const markup = `<hp:pic xmlns:hp="${ns}" xmlns:hc="${core}" id="${100000+slot}" instid="${100000+slot}" zOrder="${slot}" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" groupLevel="0" reverse="0"><hp:offset x="0" y="0"/><hp:orgSz width="${width}" height="${height}"/><hp:curSz width="${width}" height="${height}"/><hp:flip horizontal="0" vertical="0"/><hp:rotationInfo angle="0" centerX="${Math.floor(width/2)}" centerY="${Math.floor(height/2)}" rotateimage="0"/><hp:renderingInfo>${['transMatrix','scaMatrix','rotMatrix'].map(tag=>`<hc:${tag} e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>`).join('')}</hp:renderingInfo><hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${width}" y="0"/><hc:pt2 x="${width}" y="${height}"/><hc:pt3 x="0" y="${height}"/></hp:imgRect><hp:imgClip left="0" right="${width}" top="0" bottom="${height}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="${width}" dimheight="${height}"/><hc:img binaryItemIDRef="photo${slot}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/><hp:sz width="${width}" height="${height}" widthRelTo="ABSOLUTE" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" flowWithText="1" affectLSpacing="0" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic>`;
+  const markup = `<hp:pic xmlns:hp="${ns}" xmlns:hc="${core}" id="${100000+slot}" instid="${100000+slot}" zOrder="${slot}" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" groupLevel="0" reverse="0"><hp:offset x="0" y="0"/><hp:orgSz width="${width}" height="${height}"/><hp:curSz width="0" height="0"/><hp:flip horizontal="0" vertical="0"/><hp:rotationInfo angle="0" centerX="${Math.floor(width/2)}" centerY="${Math.floor(height/2)}" rotateimage="0"/><hp:renderingInfo>${['transMatrix','scaMatrix','rotMatrix'].map(tag=>`<hc:${tag} e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>`).join('')}</hp:renderingInfo><hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${width}" y="0"/><hc:pt2 x="${width}" y="${height}"/><hc:pt3 x="0" y="${height}"/></hp:imgRect><hp:imgClip left="0" right="0" top="0" bottom="0"/><hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="0" dimheight="0"/><hc:img binaryItemIDRef="photo${slot}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/><hp:sz width="${width}" height="${height}" widthRelTo="ABSOLUTE" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" flowWithText="1" affectLSpacing="0" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic>`;
   return doc.importNode(xml(markup).documentElement,true);
 }
 
@@ -45,7 +45,11 @@ export async function saveHangul({photos,count,activity,date}) {
     const size=first(cell,'cellSz'), margin=first(cell,'cellMargin');
     const inset=k=>Number(margin?.getAttribute(k)||0);
     const scale=Math.min((size.getAttribute('width')-inset('left')-inset('right')-300)/canvas.width,(size.getAttribute('height')-inset('top')-inset('bottom')-400)/canvas.height);
-    const run=first(cell,'run');
+    const paragraph = first(cell, 'p');
+    paragraph.setAttribute('paraPrIDRef', count === 3 ? '0' : '2');
+    first(cell, 'subList').setAttribute('vertAlign', 'CENTER');
+    all(paragraph, 'linesegarray').forEach(line => line.remove());
+    const run=first(paragraph,'run');
     run.appendChild(pictureNode(section,i,Math.floor(canvas.width*scale),Math.floor(canvas.height*scale)));
   }
   files[sectionKey]=serialize(section);files[packageKey]=serialize(pkg);
