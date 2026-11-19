@@ -13,15 +13,15 @@ function pictureNode(doc, slot, width, height) {
 }
 
 export async function saveHangul({photos,count,activity,date}) {
-  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=nanum12`,import.meta.url));
+  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=nanumspace1`,import.meta.url));
   if (!response.ok) throw Error('양식을 열 수 없어요.');
   const files = unzipSync(new Uint8Array(await response.arrayBuffer()));
   const sectionKey='Contents/section0.xml', packageKey='Contents/content.hpf';
   const section=xml(strFromU8(files[sectionKey])), pkg=xml(strFromU8(files[packageKey]));
   const details=all(section,'t').find(t=>t.textContent==='{{details}}');
   const dateCell = all(section,'t').find(t => t.textContent === '{{date}}');
-  details.textContent = ' ● 봉사내용:  ' + activity;
-  dateCell.textContent = '● 일 시: ' + date;
+  details.textContent = activity;
+  dateCell.textContent = date;
   const dateHeader = all(section, 'tc').find(cell => cell.contains(dateCell));
   dateHeader.setAttribute('hasMargin', '1');
   first(dateHeader, 'cellMargin').setAttribute('right', '1417'); // 5 mm in Hangul units
