@@ -129,7 +129,48 @@
     }
     return new File(parts, filename + '.txt', { type: 'text/plain' });
   }
+  // Android Chrome only shares known file types. A PDF is allowed and KakaoTalk sends it as a file,
+  // so the work archive travels as an attachment inside a small valid PDF.
+  const PDF_MARK = '%VJOURNAL ';
+  function pdfBackup(archive, filename) {
+    const name = filename.replace(/\.vjournal$/i, '') + '.pdf';
+    const pad = n => String(n).padStart(10, '0');
+    const text = 'BT /F1 16 Tf 60 780 Td (Volunteer journal work file) Tj 0 -28 Td /F1 11 Tf (Open this PDF with the journal app: share > import received work file.) Tj ET';
+    const head = '%PDF-1.4\n' + PDF_MARK + pad(0) + ' ' + pad(0) + '\n';
+    const objects = [
+      '<</Type/Catalog/Pages 2 0 R/Names<</EmbeddedFiles<</Names[(work.vjournal) 6 0 R]>>>>>>',
+      '<</Type/Pages/Kids[3 0 R]/Count 1>>',
+      '<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>',
+      '<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>',
+      `<</Length ${text.length}>>stream\n${text}\nendstream`,
+      '<</Type/Filespec/F(work.vjournal)/EF<</F 7 0 R>>>>'
+    ];
+    let size = head.length; const offsets = [], parts = [];
+    objects.forEach((body, index) => { const chunk = `${index + 1} 0 obj\n${body}\nendobj\n`; offsets.push(size); parts.push(chunk); size += chunk.length; });
+    const embedHead = `7 0 obj\n<</Type/EmbeddedFile/Subtype/application#2Fzip/Length ${archive.size}>>stream\n`;
+    offsets.push(size);
+    const dataStart = size + embedHead.length;
+    size = dataStart + archive.size;
+    const embedTail = '\nendstream\nendobj\n';
+    size += embedTail.length;
+    const xref = 'xref\n0 8\n0000000000 65535 f \n' + offsets.map(offset => pad(offset) + ' 00000 n \n').join('') + `trailer\n<</Size 8/Root 1 0 R>>\nstartxref\n${size}\n%%EOF\n`;
+    const header = '%PDF-1.4\n' + PDF_MARK + pad(dataStart) + ' ' + pad(archive.size) + '\n';
+    return new File([header, ...parts, embedHead, archive, embedTail, xref], name, { type: 'application/pdf' });
+  }
+  async function unwrapPdf(file) {
+    const start = await file.slice(0, 64).text();
+    const match = /^%PDF-1\.4\n%VJOURNAL (\d{10}) (\d{10})\n/.exec(start);
+    if (!match) { if (start.startsWith('%PDF')) throw new Error('활동일지 앱에서 만든 작업 PDF가 아닙니다.'); return file; }
+    return file.slice(Number(match[1]), Number(match[1]) + Number(match[2]));
+  }
+  async function androidAttachment(archive, filename) {
+    const pdf = pdfBackup(archive, filename);
+    if (canSendFile(pdf)) return pdf;
+    const text = await mobileBackup(archive, filename);
+    return canSendFile(text) ? text : pdf;
+  }
   async function unwrapBackup(file) {
+    file = await unwrapPdf(file);
     if (await file.slice(0, textHeader.length).text() !== textHeader) return file;
     const parts = [];
     const lineSize = chunkSize / 3 * 4 + 1;
@@ -191,6 +232,7 @@
   function installFileReceiver() {
     const input = document.querySelector('#downloaded-journal');
     if (!input) return false;
+    if (/Android/i.test(navigator.userAgent)) input.removeAttribute('accept');
     const send = document.querySelector('#send-downloaded-journal');
     const keep = document.querySelector('#keep-downloaded-journal');
     const status = document.querySelector('#downloaded-status');
@@ -211,7 +253,7 @@
         validateManifest(manifest);
         const original = new File([archive], makeFilename(manifest.project), { type: 'application/octet-stream' });
         // Prefer a supported text attachment in Chrome, including for older binary downloads.
-        const attachment = file.type === 'text/plain' && archive !== file ? file : await mobileBackup(original, original.name);
+        const attachment = await androidAttachment(original, original.name);
         if (input.files[0] !== file) return;
         keep.hidden = false;
         if (!canSendFile(attachment)) throw Error('이 브라우저는 파일 공유를 지원하지 않아요. 휴대폰의 내 파일에서 다운로드한 파일을 길게 누르고 공유를 선택해 주세요.');
@@ -243,7 +285,7 @@
         await navigator.share({ files: [prepared] });
         status.textContent = '공유 창을 닫았어요.';
       } catch (error) {
-        status.textContent = error.name === 'AbortError' ? '공유가 취소됐어요.' : '휴대폰에서 파일 공유를 허용하지 않았어요. 내 파일 → 다운로드에서 파일을 길게 누르고 공유를 선택해 주세요.';
+        status.textContent = error.name === 'AbortError' ? '공유가 취소됐어요.' : `휴대폰에서 파일 공유를 허용하지 않았어요(${prepared.size > 50 * 1024 * 1024 ? '파일이 50MB를 넘음' : error.name}). 내 파일 → 다운로드에서 파일을 길게 누르고 공유를 선택해 주세요.`;
       } finally { send.disabled = !prepared; }
     };
     return true;
@@ -259,12 +301,14 @@
     const open = document.createElement('button'); open.type = 'button'; open.className = 'share-work-button'; open.textContent = '작업 공유·가져오기'; open.setAttribute('aria-haspopup', 'dialog');
     tools.append(open); header.insertBefore(tools, privateLabel);
     const modal = document.createElement('section'); modal.id = 'share-work-dialog'; modal.className = 'share-work-backdrop'; modal.hidden = true; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'share-work-title');
-    modal.innerHTML = `<div class="share-work-card"><button type="button" class="share-work-close" aria-label="닫기">×</button><p class="eyebrow">작업 파일 공유</p><h2 id="share-work-title">사진과 운영현황까지 한 파일로</h2><p>저장한 월별 활동일지, 원본 PDF·한글파일, 날짜별 사진과 서명, 해당 월의 거점운영현황을 묶습니다. 받은 사람은 이 파일을 불러와 계속 편집한 다음 한글파일·엑셀·PDF로 저장할 수 있습니다.</p><label class="share-work-label">공유할 저장 작업<select id="share-work-project"></select></label><div class="share-work-actions"><button type="button" id="share-work-kakao" class="share-work-primary">카카오톡으로 보내기</button><button type="button" id="share-work-export" class="share-work-primary">파일 다운로드</button><label for="share-work-file" class="share-work-secondary">받은 작업 파일 가져오기</label><input id="share-work-file" type="file" accept=".vjournal,.zip,.txt,text/plain,application/zip" hidden><button type="button" id="share-work-apply" class="share-work-primary" hidden>확인</button></div><p id="share-work-status" role="status" aria-live="polite"></p></div>`;
+    modal.innerHTML = `<div class="share-work-card"><button type="button" class="share-work-close" aria-label="닫기">×</button><p class="eyebrow">작업 파일 공유</p><h2 id="share-work-title">사진과 운영현황까지 한 파일로</h2><p>저장한 월별 활동일지, 원본 PDF·한글파일, 날짜별 사진과 서명, 해당 월의 거점운영현황을 묶습니다. 받은 사람은 이 파일을 불러와 계속 편집한 다음 한글파일·엑셀·PDF로 저장할 수 있습니다.</p><label class="share-work-label">공유할 저장 작업<select id="share-work-project"></select></label><div class="share-work-actions"><button type="button" id="share-work-kakao" class="share-work-primary">카카오톡으로 보내기</button><button type="button" id="share-work-export" class="share-work-primary">파일 다운로드</button><label for="share-work-file" class="share-work-secondary">받은 작업 파일 가져오기</label><input id="share-work-file" type="file" accept=".vjournal,.pdf,.zip,.txt,text/plain,application/pdf,application/zip" hidden><button type="button" id="share-work-apply" class="share-work-primary" hidden>확인</button></div><p id="share-work-status" role="status" aria-live="polite"></p></div>`;
     document.body.append(modal);
     const select = modal.querySelector('#share-work-project');
     const shareButton = modal.querySelector('#share-work-kakao');
     const downloadButton = modal.querySelector('#share-work-export');
     const android = /Android/i.test(navigator.userAgent);
+    // Android maps accept extensions to MIME types; unknown ".vjournal" files would be greyed out.
+    if (android) modal.querySelector('#share-work-file').removeAttribute('accept');
     if (android) downloadButton.textContent = '파일 다운로드 후 카카오톡 공유';
     const chromeLink = document.createElement('a');
     chromeLink.className = 'share-work-secondary';
@@ -305,7 +349,7 @@
         const archive = await buildProjectArchive(project);
         const filename = makeFilename(project);
         const file = android
-          ? await mobileBackup(archive, filename)
+          ? await androidAttachment(archive, filename)
           : new File([archive], filename, { type: 'application/octet-stream' });
         if (current !== generation) return;
         preparedShare = file;
