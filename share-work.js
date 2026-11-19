@@ -205,7 +205,7 @@
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 120000);
-      setStatus(`${reason ? reason + ' ' : ''}작업 파일(${original.name}, ${megabytes(original.size)})을 휴대폰의 다운로드 폴더에 저장했어요. 휴대폰의 ‘내 파일’ 앱 → 다운로드에서 이 파일을 길게 누른 뒤 공유 → 카카오톡을 선택해 보내 주세요. 받는 분은 ‘받은 작업 파일 가져오기’에서 이 파일을 선택하면 됩니다.`, Boolean(reason));
+      setStatus(`${reason ? reason + ' ' : ''}작업 파일(${original.name}, ${megabytes(original.size)})을 휴대폰의 다운로드 폴더에 저장했어요. ‘연결 프로그램’ 창이 뜨면 닫아 주세요. 휴대폰의 ‘내 파일’ 앱 → 다운로드에서 이 파일을 길게 누른 뒤 공유 → 카카오톡을 선택해 보내 주세요. 받는 분은 ‘받은 작업 파일 가져오기’에서 이 파일을 선택하면 됩니다.`, Boolean(reason));
     }
     async function prepareShare() {
       resetShare();
@@ -242,7 +242,7 @@
         return;
       }
       if (!navigator.share || !navigator.canShare?.({ files: [file] })) {
-        if (android) downloadOriginal('이 브라우저는 파일 바로 공유를 지원하지 않아요.');
+        if (android) downloadOriginal(/SamsungBrowser/i.test(navigator.userAgent) ? '삼성 인터넷에서는 파일을 카카오톡으로 바로 보낼 수 없어요. 크롬(Chrome)에서 열면 바로 보낼 수 있을 수 있어요.' : '이 브라우저는 파일 바로 공유를 지원하지 않아요.');
         else setStatus('이 화면에서는 파일 공유를 열 수 없어요. 파일 다운로드를 눌러 주세요.', true);
         return;
       }
