@@ -37,7 +37,7 @@
     .page.grid-page .slot.active:not(.filled){background:#f7fbf7;outline:0}
     @media(max-width:640px){.photo-count-select{width:100%}.photo-count-options{width:100%}.photo-count-options label{flex:1}.photo-count-options span{width:100%}.toolbar{height:64px}.brand b{font-size:12px}.brand small{font-size:8px}.brand-mark{width:32px;height:32px}.settings{width:calc(100% - 24px);padding:13px;gap:10px}.settings label{min-width:180px}.settings .date{min-width:140px}.footer{width:calc(100% - 24px);align-items:flex-start;flex-direction:column}.reset{margin:0}}
     @media print{@page{size:A4 portrait;margin:0}body{background:#fff}.screen-only{display:none!important}.canvas-wrap{display:block;overflow:visible;padding:0}.page{width:210mm;min-width:0;height:297mm;margin:0;padding:20mm 18mm 15mm;box-shadow:none;page-break-after:always;break-after:page}.page.grid-page{width:210mm;height:297mm;margin:0;padding:20mm 18mm 15mm;page-break-after:always;break-after:page}.page.grid-page .frame{height:auto}.page:last-child{page-break-after:auto;break-after:auto}.frame{height:246mm}.empty{display:none!important}.page.grid-page .slot.active:not(.filled){outline:0}}
-  .page:not(.grid-page) .frame{width:171.55mm;height:235.07mm;max-width:100%}
+  .page:not(.grid-page) .frame{width:171.55mm;height:240.40mm;max-width:100%}
   </style>
 </head>
 <body>
@@ -105,7 +105,7 @@
         count.textContent=`${filled}/${photoCount}장 입력 · 사진 전체를 비율대로 표시합니다.`;
       };
       const place=(file,index)=>{if(!file.type.startsWith('image/'))return say('이미지 사진을 선택해 주세요.');if(photos[index])URL.revokeObjectURL(photos[index].url);photos[index]={url:URL.createObjectURL(file),name:file.name};active=index;render();say(`${index+1}번 사진 칸에 넣었습니다.`)};
-      document.getElementById('download-hangul').addEventListener('click',async()=>{const button=document.getElementById('download-hangul');button.disabled=true;say('한글 문서를 만들고 있어요.');try{const {saveHangul}=await import('./photo-hwpx-export.js?v=cell-nambu1');await saveHangul({photos:photos.slice(0,photoCount),count:photoCount,activity:activity.value,date:formatDate()});say('한글 문서를 저장했어요.');}catch(error){console.error(error);say('한글 문서를 만들지 못했어요. 다시 시도해 주세요.')}finally{button.disabled=false}});
+      document.getElementById('download-hangul').addEventListener('click',async()=>{const button=document.getElementById('download-hangul');button.disabled=true;say('한글 문서를 만들고 있어요.');try{const {saveHangul}=await import('./photo-hwpx-export.js?v=cell-form24040');await saveHangul({photos:photos.slice(0,photoCount),count:photoCount,activity:activity.value,date:formatDate()});say('한글 문서를 저장했어요.');}catch(error){console.error(error);say('한글 문서를 만들지 못했어요. 다시 시도해 주세요.')}finally{button.disabled=false}});
       document.addEventListener('paste',event=>{const file=Array.from(event.clipboardData.items).find(item=>item.type.startsWith('image/'))?.getAsFile();if(file){event.preventDefault();place(file,active)}});
       activity.addEventListener('input',render);date.addEventListener('input',render);countChoices.forEach(choice=>choice.addEventListener('change',()=>{active=0;render();say(`${choice.value}장 사진 양식으로 바꿨습니다.`)}));
       const toggle=()=>{preview=!preview;document.body.classList.toggle('is-preview',preview);document.getElementById('preview-actions').hidden=!preview;document.getElementById('preview').textContent=preview?'편집으로':'미리보기';render()};
