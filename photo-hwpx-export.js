@@ -1,20 +1,54 @@
-import init, {HwpDocument} from './photo-hwpx/rhwp.js';
-let ready;
-export async function saveHangul({photos, count, activity, date}) {
-  ready ||= init({module_or_path:new URL('./photo-hwpx/rhwp_bg.wasm',import.meta.url)});
-  await ready;
-  const scale=4, width=174, height=256;
-  const canvas=document.createElement('canvas');canvas.width=width*scale;canvas.height=height*scale;
-  const c=canvas.getContext('2d');c.scale(scale,scale);c.fillStyle='#fff';c.fillRect(0,0,width,height);c.fillStyle='#111';
-  c.textAlign='center';c.textBaseline='middle';c.font='bold 7.4px "함초롱바탕", "함초롬바탕", Batang, serif';c.fillText('자원봉사 활동사진',87,6.5);const titleWidth=c.measureText('자원봉사 활동사진').width;c.fillRect(87-titleWidth/2,11,titleWidth,.25);
-  const frameY=15.5, frameHeight=count===3?240:14+12+Math.ceil(count/2)*41+(Math.ceil(count/2)-1)*5;
-  c.strokeStyle='#111';c.lineWidth=.55;c.strokeRect(.3,frameY,width-.6,frameHeight);c.lineWidth=.25;c.beginPath();c.moveTo(0,frameY+14);c.lineTo(width,frameY+14);c.stroke();
-  c.textAlign='left';c.font='bold 4.23px "나눔고딕", "Malgun Gothic", sans-serif';c.fillText('● 봉사내용:',4,frameY+7);c.font='4.23px "나눔고딕", "Malgun Gothic", sans-serif';c.save();c.beginPath();c.rect(30,frameY,70,14);c.clip();c.fillText(activity,31,frameY+7);c.restore();c.font='bold 4.23px "나눔고딕", "Malgun Gothic", sans-serif';c.fillText('● 일 시:',104,frameY+7);c.font='4.23px "나눔고딕", "Malgun Gothic", sans-serif';c.fillText(date,125,frameY+7);
+import {unzipSync,zipSync,strFromU8,strToU8} from './photo-hwpx/zip.mjs';
+
+const all = (node, name) => Array.from(node.getElementsByTagNameNS('*', name));
+const first = (node, name) => all(node, name)[0];
+const xml = text => new DOMParser().parseFromString(text, 'application/xml');
+const serialize = doc => strToU8(new XMLSerializer().serializeToString(doc));
+
+function pictureNode(doc, slot, width, height) {
+  const ns = doc.documentElement.lookupNamespaceURI('hp');
+  const core = doc.documentElement.lookupNamespaceURI('hc');
+  const markup = `<hp:pic xmlns:hp="${ns}" xmlns:hc="${core}" id="${100000+slot}" instid="${100000+slot}" zOrder="${slot}" numberingType="PICTURE" textWrap="TOP_AND_BOTTOM" textFlow="BOTH_SIDES" lock="0" groupLevel="0" reverse="0"><hp:offset x="0" y="0"/><hp:orgSz width="${width}" height="${height}"/><hp:curSz width="${width}" height="${height}"/><hp:flip horizontal="0" vertical="0"/><hp:rotationInfo angle="0" centerX="${Math.floor(width/2)}" centerY="${Math.floor(height/2)}" rotateimage="0"/><hp:renderingInfo>${['transMatrix','scaMatrix','rotMatrix'].map(tag=>`<hc:${tag} e1="1" e2="0" e3="0" e4="0" e5="1" e6="0"/>`).join('')}</hp:renderingInfo><hp:imgRect><hc:pt0 x="0" y="0"/><hc:pt1 x="${width}" y="0"/><hc:pt2 x="${width}" y="${height}"/><hc:pt3 x="0" y="${height}"/></hp:imgRect><hp:imgClip left="0" right="${width}" top="0" bottom="${height}"/><hp:inMargin left="0" right="0" top="0" bottom="0"/><hp:imgDim dimwidth="${width}" dimheight="${height}"/><hc:img binaryItemIDRef="photo${slot}" bright="0" contrast="0" effect="REAL_PIC" alpha="0"/><hp:effects/><hp:sz width="${width}" height="${height}" widthRelTo="ABSOLUTE" heightRelTo="ABSOLUTE" protect="0"/><hp:pos treatAsChar="1" flowWithText="1" affectLSpacing="0" allowOverlap="0" holdAnchorAndSO="0" vertRelTo="PARA" horzRelTo="COLUMN" vertAlign="TOP" horzAlign="LEFT" vertOffset="0" horzOffset="0"/><hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic>`;
+  return doc.importNode(xml(markup).documentElement,true);
+}
+
+export async function saveHangul({photos,count,activity,date}) {
+  const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx`,import.meta.url));
+  if (!response.ok) throw Error('양식을 열 수 없어요.');
+  const files = unzipSync(new Uint8Array(await response.arrayBuffer()));
+  const sectionKey='Contents/section0.xml', packageKey='Contents/content.hpf';
+  const section=xml(strFromU8(files[sectionKey])), pkg=xml(strFromU8(files[packageKey]));
+  const details=all(section,'t').find(t=>t.textContent==='{{details}}');
+  details.textContent=(count===3?'● 봉사내용: ':'')+activity+'        ● 일 시: '+date;
+  const rows=all(section,'tr');
   for(let i=0;i<count;i++){
-    const x=count===3?(width-127)/2:10+(i%2)*82,y=frameY+14+(count===3?7+i*71:6+Math.floor(i/2)*46),w=count===3?127:72,h=count===3?64:41;
-    c.strokeStyle='#333';c.lineWidth=.25;c.strokeRect(x,y,w,h);
-    if(photos[i]){const img=new Image();img.src=photos[i].url;await img.decode();const ratio=Math.min((w-.5)/img.naturalWidth,(h-.5)/img.naturalHeight);const iw=img.naturalWidth*ratio,ih=img.naturalHeight*ratio;c.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih)}
+    if(!photos[i]) continue;
+    const row=rows[2+2*(count===3?i:Math.floor(i/2))];
+    const cell=all(row,'tc')[count===3||i%2===0?1:3];
+    const image=new Image();
+    image.src=photos[i].url;
+    await image.decode();
+    const canvas=document.createElement('canvas');
+    const qualityScale=Math.min(1,2200/Math.max(image.naturalWidth,image.naturalHeight));
+    canvas.width=Math.max(1,Math.round(image.naturalWidth*qualityScale));
+    canvas.height=Math.max(1,Math.round(image.naturalHeight*qualityScale));
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(image,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',.94));
+    const filename=`BinData/photo${i}.jpg`;
+    files[filename]=new Uint8Array(await blob.arrayBuffer());
+    const manifest=first(pkg,'manifest'), item=pkg.createElementNS(manifest.namespaceURI,'opf:item');
+    for(const [key,value] of Object.entries({id:'photo'+i,href:filename,'media-type':'image/jpeg',isEmbeded:'1'}))item.setAttribute(key,value);
+    manifest.appendChild(item);
+    const size=first(cell,'cellSz'), margin=first(cell,'cellMargin');
+    const inset=k=>Number(margin?.getAttribute(k)||0);
+    const scale=Math.min((size.getAttribute('width')-inset('left')-inset('right')-300)/canvas.width,(size.getAttribute('height')-inset('top')-inset('bottom')-400)/canvas.height);
+    const run=first(cell,'run');
+    run.appendChild(pictureNode(section,i,Math.floor(canvas.width*scale),Math.floor(canvas.height*scale)));
   }
-  const blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('사진을 만들지 못했습니다.')),'image/png'));
-  const doc=HwpDocument.createEmpty();try{doc.createBlankDocument();const def=JSON.parse(doc.getPageDef(0));Object.assign(def,{marginLeft:5102,marginRight:5102,marginTop:5669,marginBottom:4252,marginHeader:0,marginFooter:0});doc.setPageDef(0,JSON.stringify(def));doc.insertPicture(0,0,0,'',new Uint8Array(await blob.arrayBuffer()),49322,Math.round(height*7200/25.4),canvas.width,canvas.height,'png','활동보고서 사진');const bytes=doc.exportHwpx();const result=new Blob([bytes],{type:'application/haansofthwpx'});const url=URL.createObjectURL(result),a=document.createElement('a');a.href=url;a.download='활동보고서사진.hwpx';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)}finally{doc.free()}
+  files[sectionKey]=serialize(section);files[packageKey]=serialize(pkg);
+  const blob=new Blob([zipSync({...files,mimetype:[files.mimetype,{level:0}]})],{type:'application/haansofthwpx'});
+  const url=URL.createObjectURL(blob),link=document.createElement('a');
+  link.href=url;link.download='활동보고서사진.hwpx';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
