@@ -1,8 +1,10 @@
 'use strict';
 const BASE = new URL('./', self.location.href);
 const PAGE = new URL('activity-report-photo.html', BASE);
-const CACHE = `activity-report-photo-v1:${BASE.pathname}`;
+const CACHE = `activity-report-photo-cells-2:${BASE.pathname}`;
 const ASSETS = ['activity-report-photo.html', 'activity-report-photo-manifest.json',
+  'photo-hwpx-export.js?v=cell-2', 'photo-hwpx/zip.mjs',
+  'photo-hwpx/form-3.hwpx', 'photo-hwpx/form-6.hwpx', 'photo-hwpx/form-8.hwpx',
   'photo-install/install.js', 'photo-install/install.css',
   'photo-install/icon-192.png', 'photo-install/icon-512.png', 'photo-install/icon-180.png'];
 const PATHS = new Set(ASSETS.map(path => new URL(path, BASE).pathname));
@@ -15,7 +17,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== BASE.origin || !PATHS.has(url.pathname)) return;
-  const cacheKey = new URL(url.pathname, BASE).href;
+  const cacheKey = url.href;
   event.respondWith(fetch(event.request).then(response => {
     if (response.ok) {
       const copy = response.clone();

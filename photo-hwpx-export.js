@@ -49,6 +49,6 @@ export async function saveHangul({photos,count,activity,date}) {
   files[sectionKey]=serialize(section);files[packageKey]=serialize(pkg);
   const blob=new Blob([zipSync({...files,mimetype:[files.mimetype,{level:0}]})],{type:'application/haansofthwpx'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download='활동보고서사진.hwpx';link.click();
+  link.href=url;link.download=`활동보고서사진_${count}장_셀편집.hwpx`;link.click();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
