@@ -12,7 +12,15 @@ function pictureNode(doc, slot, width, height) {
   return doc.importNode(xml(markup).documentElement,true);
 }
 
-export async function saveHangul({photos,count,activity,date}) {
+const safeName = text => text.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().replace(/[. ]+$/, '');
+
+// File name: "<일시> <봉사내용>.hwpx", e.g. "2026.11.20.(금) 지역안전 및 야간순찰 방범활동.hwpx"
+function reportFileName(fileDate, activity) {
+  const name = safeName([fileDate, activity].filter(Boolean).join(' ')).slice(0, 120).trim();
+  return `${name || '활동보고서사진'}.hwpx`;
+}
+
+export async function saveHangul({photos,count,activity,date,fileDate}) {
   const response = await fetch(new URL(`./photo-hwpx/form-${count}.hwpx?v=originalnote5`,import.meta.url));
   if (!response.ok) throw Error('양식을 열 수 없어요.');
   const files = unzipSync(new Uint8Array(await response.arrayBuffer()));
@@ -59,6 +67,6 @@ export async function saveHangul({photos,count,activity,date}) {
   files[sectionKey]=serialize(section);files[packageKey]=serialize(pkg);
   const blob=new Blob([zipSync({...files,mimetype:[files.mimetype,{level:0}]})],{type:'application/haansofthwpx'});
   const url=URL.createObjectURL(blob),link=document.createElement('a');
-  link.href=url;link.download=`활동보고서사진_${count}장_셀편집.hwpx`;link.click();
+  link.href=url;link.download=reportFileName(fileDate||date,activity);link.click();
   setTimeout(()=>URL.revokeObjectURL(url),30000);
 }
