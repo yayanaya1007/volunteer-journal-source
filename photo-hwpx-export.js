@@ -31,8 +31,14 @@ export async function saveHangul({photos,count,activity,date,fileDate}) {
   details.textContent = activity;
   dateCell.textContent = date;
   const dateHeader = all(section, 'tc').find(cell => cell.contains(dateCell));
+  // Give the date 8 mm more room and move its right edge 2 mm left.
+  const detailsHeader = all(section, 'tc').find(cell => cell.contains(details));
+  for (const [cell, delta] of [[detailsHeader, -2268], [dateHeader, 2268]]) {
+    const size = first(cell, 'cellSz');
+    size.setAttribute('width', String(Number(size.getAttribute('width')) + delta));
+  }
   dateHeader.setAttribute('hasMargin', '1');
-  first(dateHeader, 'cellMargin').setAttribute('right', '1417'); // 5 mm in Hangul units
+  first(dateHeader, 'cellMargin').setAttribute('right', '1984'); // 7 mm in Hangul units
   const rows=all(section,'tr');
   for(let i=0;i<count;i++){
     if(!photos[i]) continue;
