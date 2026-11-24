@@ -1,0 +1,26 @@
+.work-import-picker {
+  box-sizing: border-box;
+  width: min(30rem, calc(100% - 2rem));
+  max-height: 85vh;
+  max-height: 85dvh;
+  margin: auto;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  background: white;
+  color: #172033;
+  font: 1rem/1.5 system-ui, sans-serif;
+}
+.work-import-picker::backdrop { background: #10182880; }
+.work-import-picker form { display: flex; flex-direction: column; max-height: inherit; margin: 0; }
+.work-import-picker header, .work-import-picker footer { padding: 1rem 1.25rem; }
+.work-import-picker h2 { font-size: 1.2rem; margin: 0 0 .35rem; }
+.work-import-picker p { margin: .5rem 0 0; color: #475569; font-size: .9rem; }
+.work-import-days { overflow: auto; padding: 0 1.25rem; }
+.work-import-days label { display: flex; align-items: center; gap: .65rem; margin: 0; padding: .65rem 0; border-top: 1px solid #e2e8f0; cursor: pointer; }
+.work-import-days input { display: inline-block; width: 1.15rem; height: 1.15rem; margin: 0; }
+.work-import-days small { margin-left: auto; color: #475569; }
+.work-import-picker footer { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; }
+.work-import-picker button { width: auto; margin: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: .55rem .85rem; color: #172033; background: white; font: inherit; cursor: pointer; }
+.work-import-picker button[type=submit] { color: white; background: #2452b8; }
+.work-import-picker button:disabled { opacity: .52; cursor: default; }

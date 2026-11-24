@@ -3,3 +3,27 @@
 
 /* The floating message contains no controls and must not intercept form clicks. */
 .journal-sticky-notice { pointer-events: none; }
+
+.daily-date-actions, .daily-work-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.daily-date-actions { margin-bottom: .5rem; }
+.daily-work-actions > button { flex: 1 1 auto; }
+@media (max-width: 480px) {
+  .daily-work-actions > button, .daily-date-actions > button { padding-inline: .65rem; }
+}
+
+.journal-photo-drop-header {
+  border: 1px dashed #a4b4cf;
+  border-radius: 8px;
+  padding: .8rem 1rem;
+}
+[data-photo-drag-over][role="tab"],
+[data-photo-drag-over][role="tabpanel"] .journal-photo-drop-header {
+  outline: 2px solid #2452b8;
+  outline-offset: -2px;
+  background: #eef4ff;
+}

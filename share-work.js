@@ -69,9 +69,20 @@
     const db = await openDb();
     return new Promise((resolve, reject) => { const tx = db.transaction(DB_STORE, 'readonly'), request = tx.objectStore(DB_STORE).get(id); request.onsuccess = () => resolve(request.result || null); request.onerror = () => reject(request.error); tx.oncomplete = () => db.close(); });
   }
-  async function putAsset(id, blob) {
+  async function writeImportAssets(files, remove = false) {
+    if (!files.size) return;
     const db = await openDb();
-    return new Promise((resolve, reject) => { const tx = db.transaction(DB_STORE, 'readwrite'); tx.objectStore(DB_STORE).put(blob, id); tx.oncomplete = () => { db.close(); resolve(); }; tx.onerror = () => { db.close(); reject(tx.error || new Error('사진을 저장하지 못했습니다.')); }; });
+    try {
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, 'readwrite'), store = tx.objectStore(DB_STORE);
+        tx.oncomplete = resolve;
+        tx.onabort = () => reject(tx.error || new Error('첨부 파일을 저장하지 못했어요.'));
+        for (const [id, blob] of files) {
+          if (remove) store.delete(id);
+          else store.add(blob, id);
+        }
+      });
+    } finally { db.close(); }
   }
   function savedProjects() {
     const items = [];
@@ -180,22 +191,147 @@
     }
     return new Blob(parts);
   }
+  function datedAttachment(asset) {
+    return asset.kind === 'photo' || asset.kind === 'source-signature';
+  }
+
+  function checkUnsavedJournal() {
+    const save = [...document.querySelectorAll('.primary-actions button')].find(button => button.textContent.trim() === '작업 저장');
+    if (save) throw new Error('작성 중인 일지가 있어요. 이 창을 닫고 ‘작업 저장’을 누른 다음 가져와 주세요.');
+  }
+
+  function importDates(project) {
+    const dates = new Set();
+    const lastDay = new Date(Number(project.month.slice(0, 4)), Number(project.month.slice(5)), 0).getDate();
+    function valid(date) {
+      return typeof date === 'string' && date.startsWith(project.month + '-') &&
+        /^\d{4}-\d{2}-(0[1-9]|[12]\d|3[01])$/.test(date) && Number(date.slice(8)) <= lastDay;
+    }
+    for (const record of project.records) {
+      if (!valid(record?.date) || dates.has(record.date)) throw new Error('작업 파일의 활동일자가 겹치거나 올바르지 않아요.');
+      dates.add(record.date);
+    }
+    for (const asset of project.assets) {
+      if (datedAttachment(asset) && valid(asset.date)) dates.add(asset.date);
+    }
+    return dates;
+  }
+
+  function chooseImportDates(project, existing, dates) {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'work-import-picker';
+    dialog.setAttribute('aria-labelledby', 'work-import-heading');
+    dialog.innerHTML = `<form method="dialog"><header><h2 id="work-import-heading">가져올 날짜 선택</h2><strong></strong>
+      <p>기존 날짜는 덮어쓰고 새 날짜는 추가해요. 고르지 않은 날의 일지와 사진, 이달 전체 서명과 운영현황은 그대로 남아요.</p></header>
+      <div class="work-import-days"></div><footer><button type="button">취소</button>
+      <button type="submit" disabled>선택한 날짜만 가져오기</button></footer></form>`;
+    dialog.querySelector('strong').textContent = `${project.month} · ${project.name || '이름 미입력'}`;
+    const list = dialog.querySelector('.work-import-days'), selected = new Set();
+    const apply = dialog.querySelector('[type=submit]');
+    const existingDates = new Set([...existing.records.map(r => r.date), ...existing.assets.filter(datedAttachment).map(a => a.date)]);
+    for (const date of [...dates].sort()) {
+      const row = document.createElement('label'), check = document.createElement('input'), note = document.createElement('small');
+      check.type = 'checkbox'; check.value = date;
+      note.textContent = existingDates.has(date) ? '기존 날짜' : '새 날짜';
+      row.append(check, `${Number(date.slice(5, 7))}월 ${Number(date.slice(8))}일`, note);
+      list.append(row);
+    }
+    list.onchange = ({target}) => {
+      if (target.checked) selected.add(target.value);
+      else selected.delete(target.value);
+      apply.disabled = !selected.size;
+      apply.textContent = selected.size ? `선택한 ${selected.size}일 가져오기` : '선택한 날짜만 가져오기';
+    };
+    dialog.querySelector('[type=button]').onclick = () => dialog.close();
+    dialog.querySelector('form').onsubmit = event => {
+      event.preventDefault();
+      if (selected.size) dialog.close('apply');
+    };
+    dialog.onkeydown = event => { if (event.key === 'Escape') event.stopPropagation(); };
+    document.body.append(dialog);
+    return new Promise(resolve => {
+      dialog.onclose = () => { dialog.remove(); resolve(dialog.returnValue === 'apply' ? selected : null); };
+      dialog.showModal();
+    });
+  }
+
   async function importProject(file) {
+    checkUnsavedJournal();
     const entries = await readZip(await unwrapBackup(file)), raw = entries.get('work.json'); if (!raw) throw new Error('작업 정보가 들어 있지 않습니다.');
     const manifest = JSON.parse(decoder.decode(raw)); validateManifest(manifest);
-    const project = manifest.project, target = savedProjects().find(entry => entry.project.month === project.month && (entry.project.name || '') === (project.name || ''));
-    if (target && !confirm(`${project.month} ${project.name || '이름 미입력'} 작업이 이미 있습니다. 기존 활동일지와 운영현황을 공유 파일 내용으로 바꿀까요?`)) return false;
-    const idMap = new Map();
-    for (const asset of project.assets) {
-      if (!asset || typeof asset.id !== 'string' || !asset.id) throw new Error('첨부 파일 정보가 올바르지 않습니다.');
+    const project = manifest.project, name = (project.name || '').trim();
+    const key = `${PREFIX}${project.month}|${encodeURIComponent(name)}`;
+    const projects = savedProjects();
+    const target = projects.find(item => item.key === key) || projects.find(item => item.project.month === project.month && (item.project.name || '').trim() === name);
+    const storageKey = target?.key || key, original = localStorage.getItem(storageKey);
+    if (original !== null && !target) throw new Error('기존 일지를 확인할 수 없어 가져오기를 멈췄어요.');
+    const dates = importDates(project);
+    if (target && !dates.size) throw new Error('이 작업 파일에는 가져올 날짜가 없어요.');
+    const selected = target ? await chooseImportDates(project, target.project, dates) : null;
+    if (target && !selected) return false;
+    const records = project.records.filter(record => !selected || selected.has(record.date));
+    const attachments = project.assets.filter(asset => !selected || datedAttachment(asset) && selected.has(asset.date));
+    const dependencies = new Set([...records, ...attachments].map(item => item.sourceId).filter(Boolean));
+    if (selected) attachments.push(...project.assets.filter(asset => asset.kind === 'source' && dependencies.has(asset.id)));
+    const files = new Map(), idMap = new Map(), imported = [];
+    const common = selected && project.assets.find(asset => asset.kind === 'signature');
+    const signatureDates = common ? records.filter(record => !record.signatureDeleted && !common.excludedDates?.includes(record.date) &&
+      (common.applyToAllDates || !attachments.some(asset => asset.kind === 'source-signature' && asset.date === record.date))).map(record => record.date) : [];
+    if (signatureDates.length) attachments.push(common);
+    for (const asset of attachments) {
+      if (!asset || typeof asset.id !== 'string' || !asset.id || idMap.has(asset.id)) throw new Error('첨부 파일 정보가 올바르지 않습니다.');
       const filePath = typeof asset.file === 'string' && asset.file.startsWith('assets/') ? asset.file : `assets/${asset.id}`;
       const data = entries.get(filePath) || entries.get(`assets/${asset.id}`); if (!data) throw new Error(`공유 파일에 첨부 자료가 없습니다: ${asset.name || asset.id}`);
-      const newId = crypto.randomUUID(); idMap.set(asset.id, newId);
-      await putAsset(newId, new Blob([data], { type: asset.type || 'application/octet-stream' }));
-      asset.id = newId; delete asset.file; asset.url = '';
+      const blob = new Blob([data], {type: asset.type || 'application/octet-stream'});
+      if (selected && asset.kind === 'source') {
+        const prior = target.project.assets.find(item => item.kind === 'source' && (item.id === asset.id || item.importedSourceId === asset.id));
+        const previous = prior && await getAsset(prior.id);
+        if (previous && previous.size === data.length && new Uint8Array(await previous.arrayBuffer()).every((b, i) => b === data[i])) {
+          idMap.set(asset.id, prior.id);
+          continue;
+        }
+      }
+      const newId = crypto.randomUUID();
+      idMap.set(asset.id, newId);
+      const metadata = {...asset, id: newId, url: ''};
+      delete metadata.file;
+      if (asset.kind === 'source') metadata.importedSourceId = asset.id;
+      if (asset === common) {
+        for (const date of signatureDates) {
+          const id = crypto.randomUUID();
+          imported.unshift({...metadata, id, date, kind: 'source-signature', applyToAllDates: false});
+          files.set(id, blob);
+        }
+      } else {
+        imported.push(metadata);
+        files.set(newId, blob);
+      }
     }
-    project.records = project.records.map(record => ({ ...record, sourceId: idMap.get(record.sourceId) || record.sourceId }));
-    localStorage.setItem(`${PREFIX}${project.month}|${encodeURIComponent((project.name || '').trim())}`, JSON.stringify(project));
+    function linkSource(item) {
+      if (!item.sourceId) return item;
+      return {...item, sourceId: idMap.get(item.sourceId) || ''};
+    }
+    const mergedRecords = records.map(linkSource), mergedAssets = imported.map(linkSource);
+    let result = {...project, records: mergedRecords, assets: mergedAssets};
+    if (selected) {
+      const existing = target.project;
+      const recordDates = new Set(records.map(record => record.date));
+      const kindsOnDate = new Set(mergedAssets.map(asset => asset.date + '/' + asset.kind));
+      result = {...existing,
+        records: [...existing.records.filter(record => !recordDates.has(record.date)), ...mergedRecords].sort((a, b) => a.date.localeCompare(b.date)),
+        assets: [...existing.assets.filter(asset => !(datedAttachment(asset) && selected.has(asset.date) &&
+          (recordDates.has(asset.date) || kindsOnDate.has(asset.date + '/' + asset.kind)))), ...mergedAssets]};
+    }
+    await writeImportAssets(files);
+    try {
+      checkUnsavedJournal();
+      if (localStorage.getItem(storageKey) !== original || (key !== storageKey && localStorage.getItem(key) !== null)) throw new Error('날짜를 고르는 동안 기존 일지가 바뀌었어요. 작업 파일을 다시 선택해 주세요.');
+      localStorage.setItem(storageKey, JSON.stringify(result));
+    } catch (error) {
+      await writeImportAssets(files, true);
+      throw error;
+    }
+    if (selected) return {month: result.month, name: result.name || '', importedDays: selected.size};
     const operations = manifest.operations || {};
     if (operations.rows != null) localStorage.setItem(`${PREFIX}operations:${project.month}`, operations.rows); else localStorage.removeItem(`${PREFIX}operations:${project.month}`);
     if (operations.details != null) localStorage.setItem(`${PREFIX}operations-details:${project.month}`, operations.details); else localStorage.removeItem(`${PREFIX}operations-details:${project.month}`);
@@ -387,7 +523,6 @@
       }
     }
     shareButton.addEventListener('click', sharePreparedFile);
-    let pendingImport = null;
     const applyImported = modal.querySelector('#share-work-apply');
     function refresh() {
       const selected = select.value, items = savedProjects(); select.replaceChildren();
@@ -398,12 +533,7 @@
     const close = () => { modal.hidden = true; resetShare(); };
     open.addEventListener('click', () => { refresh(); modal.hidden = false; prepareShare(); modal.querySelector('.share-work-close').focus(); });
     modal.querySelector('.share-work-close').addEventListener('click', close);
-    applyImported.addEventListener('click', () => {
-      if (!pendingImport) return;
-      window.dispatchEvent(new CustomEvent('volunteer-journal:imported', { detail: pendingImport }));
-      setStatus(`${pendingImport.month} ${pendingImport.name || '이름 미입력'} 일지와 첨부 파일을 화면에 적용했습니다.`);
-      pendingImport = null; applyImported.hidden = true; close();
-    });
+    applyImported.addEventListener('click', () => { applyImported.hidden = true; close(); });
     modal.addEventListener('click', event => { if (event.target === modal) close(); });
     window.addEventListener('keydown', event => { if (event.key === 'Escape' && !modal.hidden) close(); });
     downloadButton.addEventListener('click', async () => {
@@ -421,9 +551,19 @@
     });
     modal.querySelector('#share-work-file').addEventListener('change', async event => {
       const input = event.currentTarget, file = input.files?.[0]; if (!file) return;
-      try { const imported = await importProject(file); if (imported) { pendingImport = imported; applyImported.hidden = false; setStatus('작업과 사진을 가져왔습니다. 확인 버튼을 누르면 현재 화면에 적용됩니다.'); refresh(); } }
+      input.disabled = true;
+      try {
+        const imported = await importProject(file);
+        if (imported) {
+          applyImported.hidden = false;
+          const message = imported.importedDays ? `선택한 ${imported.importedDays}일을 가져왔어요.` : '작업과 사진을 가져왔습니다.';
+          window.dispatchEvent(new CustomEvent('volunteer-journal:imported', {detail: imported}));
+          setStatus(message);
+          refresh();
+        }
+      }
       catch (error) { setStatus(error.message || '공유 파일을 가져오지 못했습니다.', true); }
-      finally { input.value = ''; }
+      finally { input.value = ''; input.disabled = false; }
     });
   }
   if (installFileReceiver()) return;
