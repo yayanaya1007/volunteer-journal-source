@@ -29,9 +29,11 @@
 .journal-review-heading { font-size: 1rem; font-weight: 600; margin: 0 0 .75rem; }
 .journal-source-column, .record-grid > .record-fields { min-width: 0; }
 .journal-source-column > .source-view { position: static; }
-.journal-photo-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .72fr) minmax(0, 1.16fr); gap: .3rem; margin: .75rem 0; }
-.journal-photo-actions > button { min-width: 0; height: auto; min-height: 2.5rem; padding: .35rem .25rem; font-size: .8125rem; line-height: 1.25; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
-.journal-photo-actions > button > svg { display: none; }
+.journal-review-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .72fr) minmax(0, 1.16fr); gap: .3rem; margin: 0 0 .5rem; }
+.record-fields > .journal-review-actions + h3 { margin-top: 0; }
+.journal-source-column > .source-view + .journal-trip-photos { margin-top: .75rem; }
+.journal-review-actions > button { min-width: 0; height: auto; min-height: 2.5rem; padding: .35rem .25rem; font-size: .8125rem; line-height: 1.25; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.journal-review-actions > button > svg { display: none; }
 .journal-trip-photos { min-width: 0; }
 .journal-trip-photos .photo-header { flex-wrap: wrap; margin: 0 0 .75rem; }
 .journal-trip-photos .photo-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
