@@ -27,3 +27,15 @@
   outline-offset: -2px;
   background: #eef4ff;
 }
+
+.journal-source-column, .journal-tab-body { min-width: 0; }
+.journal-source-column > .source-view { position: static; }
+.journal-source-column > .source-view + [role="tablist"] { margin-top: .5rem; }
+.journal-tab-body .photo-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+}
+.journal-tab-body .photo-header { flex-wrap: wrap; }
+@media (min-width: 1101px) {
+  .record-grid > .journal-source-column { position: sticky; top: 16px; }
+  .journal-source-column > .source-view { max-height: calc(100dvh - 5rem); overflow: auto; }
+}
