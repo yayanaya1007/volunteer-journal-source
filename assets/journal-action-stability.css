@@ -21,21 +21,21 @@
   border-radius: 8px;
   padding: .8rem 1rem;
 }
-[data-photo-drag-over][role="tab"],
-[data-photo-drag-over][role="tabpanel"] .journal-photo-drop-header {
+.journal-trip-photos[data-photo-drag-over] .journal-photo-drop-header {
   outline: 2px solid #2452b8;
   outline-offset: -2px;
   background: #eef4ff;
 }
-
-.journal-source-column, .journal-tab-body { min-width: 0; }
+.journal-review-heading { font-size: 1rem; font-weight: 600; margin: 0 0 .75rem; }
+.journal-source-column, .record-grid > .record-fields { min-width: 0; }
 .journal-source-column > .source-view { position: static; }
-.journal-source-column > .source-view + [role="tablist"] { margin-top: .5rem; }
-.journal-tab-body .photo-grid {
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
-}
-.journal-tab-body .photo-header { flex-wrap: wrap; }
+.journal-photo-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin: .75rem 0; }
+.journal-photo-actions > button { padding-inline: .6rem; font-size: .8125rem; }
+.journal-trip-photos { min-width: 0; }
+.journal-trip-photos .photo-header { flex-wrap: wrap; margin: 0 0 .75rem; }
+.journal-trip-photos .photo-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.journal-no-record { display: flex; flex-direction: column; gap: 1rem; }
+.journal-no-record > .empty-record { order: -1; }
 @media (min-width: 1101px) {
-  .record-grid > .journal-source-column { position: sticky; top: 16px; }
   .journal-source-column > .source-view { max-height: calc(100dvh - 5rem); overflow: auto; }
 }
