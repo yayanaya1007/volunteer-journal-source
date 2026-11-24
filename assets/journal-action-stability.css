@@ -29,8 +29,9 @@
 .journal-review-heading { font-size: 1rem; font-weight: 600; margin: 0 0 .75rem; }
 .journal-source-column, .record-grid > .record-fields { min-width: 0; }
 .journal-source-column > .source-view { position: static; }
-.journal-photo-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin: .75rem 0; }
-.journal-photo-actions > button { padding-inline: .6rem; font-size: .8125rem; }
+.journal-photo-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .72fr) minmax(0, 1.16fr); gap: .3rem; margin: .75rem 0; }
+.journal-photo-actions > button { min-width: 0; height: auto; min-height: 2.5rem; padding: .35rem .25rem; font-size: .8125rem; line-height: 1.25; white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+.journal-photo-actions > button > svg { display: none; }
 .journal-trip-photos { min-width: 0; }
 .journal-trip-photos .photo-header { flex-wrap: wrap; margin: 0 0 .75rem; }
 .journal-trip-photos .photo-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
