@@ -41,3 +41,7 @@
 @media (min-width: 1101px) {
   .journal-source-column > .source-view { max-height: calc(100dvh - 5rem); overflow: auto; }
 }
+
+.journal-undated-photos { margin-top: 1rem; }
+.journal-undated-photos > summary { cursor: pointer; }
+.journal-undated-photos .photo-grid { margin-top: .75rem; grid-template-columns: 1fr; }
