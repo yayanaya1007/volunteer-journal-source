@@ -217,45 +217,84 @@
     return dates;
   }
 
-  function chooseImportDates(project, existing, dates) {
+  function chooseImportItems({heading, caption, description, items, unit, selectLabel, initialAll = false}) {
     const dialog = document.createElement('dialog');
     dialog.className = 'work-import-picker';
     dialog.setAttribute('aria-labelledby', 'work-import-heading');
-    dialog.innerHTML = `<form method="dialog"><header><h2 id="work-import-heading">가져올 날짜 선택</h2><strong></strong>
-      <p>기존 날짜는 덮어쓰고 새 날짜는 추가해요. 고르지 않은 날의 일지와 사진, 이달 전체 서명과 운영현황은 그대로 남아요.</p></header>
-      <div class="work-import-days"></div><footer><button type="button">취소</button>
-      <button type="submit" disabled>선택한 날짜만 가져오기</button></footer></form>`;
-    dialog.querySelector('strong').textContent = `${project.month} · ${project.name || '이름 미입력'}`;
-    const list = dialog.querySelector('.work-import-days'), selected = new Set();
+    dialog.innerHTML = `<form method="dialog"><header><h2 id="work-import-heading"></h2><strong></strong><p></p></header>
+      <div class="work-import-select"><button type="button" data-select></button></div>
+      <div class="work-import-days"></div><footer><button type="button" data-cancel>취소</button>
+      <button type="submit"></button></footer></form>`;
+    dialog.querySelector('h2').textContent = heading;
+    dialog.querySelector('strong').textContent = caption;
+    dialog.querySelector('p').textContent = description;
+    const list = dialog.querySelector('.work-import-days'), all = dialog.querySelector('[data-select]');
     const apply = dialog.querySelector('[type=submit]');
-    const existingDates = new Set([...existing.records.map(r => r.date), ...existing.assets.filter(datedAttachment).map(a => a.date)]);
-    for (const date of [...dates].sort()) {
-      const row = document.createElement('label'), check = document.createElement('input'), note = document.createElement('small');
-      check.type = 'checkbox'; check.value = date;
-      note.textContent = existingDates.has(date) ? '기존 날짜' : '새 날짜';
-      row.append(check, `${Number(date.slice(5, 7))}월 ${Number(date.slice(8))}일`, note);
+    const boxes = items.map(({label, note}) => {
+      const row = document.createElement('label'), check = document.createElement('input');
+      check.type = 'checkbox';
+      check.checked = initialAll;
+      row.append(check, label);
+      if (note) {
+        const badge = document.createElement('small');
+        badge.textContent = note;
+        row.append(badge);
+      }
       list.append(row);
+      return check;
+    });
+    function update() {
+      const n = boxes.filter(box => box.checked).length;
+      all.textContent = n === boxes.length ? selectLabel + ' 해제' : selectLabel;
+      all.disabled = !boxes.length;
+      apply.disabled = !n;
+      apply.textContent = n ? `선택한 ${n}${unit} 가져오기` : (unit === '일' ? '선택한 날짜만 가져오기' : '선택한 파일 가져오기');
     }
-    list.onchange = ({target}) => {
-      if (target.checked) selected.add(target.value);
-      else selected.delete(target.value);
-      apply.disabled = !selected.size;
-      apply.textContent = selected.size ? `선택한 ${selected.size}일 가져오기` : '선택한 날짜만 가져오기';
+    all.onclick = () => {
+      const checked = boxes.some(box => !box.checked);
+      for (const box of boxes) box.checked = checked;
+      update();
     };
-    dialog.querySelector('[type=button]').onclick = () => dialog.close();
+    list.onchange = update;
+    update();
+    dialog.querySelector('[data-cancel]').onclick = () => dialog.close();
     dialog.querySelector('form').onsubmit = event => {
       event.preventDefault();
-      if (selected.size) dialog.close('apply');
+      if (!apply.disabled) dialog.close('apply');
     };
     dialog.onkeydown = event => { if (event.key === 'Escape') event.stopPropagation(); };
     document.body.append(dialog);
     return new Promise(resolve => {
-      dialog.onclose = () => { dialog.remove(); resolve(dialog.returnValue === 'apply' ? selected : null); };
+      dialog.onclose = () => {
+        dialog.remove();
+        resolve(dialog.returnValue === 'apply' ? items.filter((_, index) => boxes[index].checked).map(item => item.value) : null);
+      };
       dialog.showModal();
     });
   }
 
-  async function importProject(file) {
+  async function chooseImportDates(project, existingDates, dates, filename) {
+    const values = await chooseImportItems({
+      heading: '가져올 날짜 선택', caption: `${project.month} · ${project.name || '이름 미입력'} · ${filename}`,
+      description: '기존 날짜는 덮어쓰고 새 날짜는 추가해요. 고르지 않은 날의 일지와 사진, 이달 전체 서명과 운영현황은 그대로 남아요.',
+      items: [...dates].sort().map(date => ({value: date, label: `${Number(date.slice(5, 7))}월 ${Number(date.slice(8))}일`, note: existingDates.has(date) ? '기존 날짜' : '새 날짜'})),
+      unit: '일', selectLabel: '날짜 전체 선택'
+    });
+    return values && new Set(values);
+  }
+
+  async function isFolderWorkFile(file) {
+    if (/\.vjournal$/i.test(file.name)) return true;
+    if (!/\.(pdf|txt|zip)$/i.test(file.name)) return false;
+    const bytes = new Uint8Array(await file.slice(0, 64).arrayBuffer());
+    const prefix = decoder.decode(bytes);
+    if (prefix.startsWith('%PDF-1.4\n' + PDF_MARK) || prefix.startsWith(textHeader)) return true;
+    // The app stores work.json as the first uncompressed ZIP entry.
+    return bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 3 && bytes[3] === 4 &&
+      bytes[26] === 9 && bytes[27] === 0 && decoder.decode(bytes.subarray(30, 39)) === 'work.json';
+  }
+
+  async function importProject(file, batch = false) {
     checkUnsavedJournal();
     const entries = await readZip(await unwrapBackup(file)), raw = entries.get('work.json'); if (!raw) throw new Error('작업 정보가 들어 있지 않습니다.');
     const manifest = JSON.parse(decoder.decode(raw)); validateManifest(manifest);
@@ -267,7 +306,12 @@
     if (original !== null && !target) throw new Error('기존 일지를 확인할 수 없어 가져오기를 멈췄어요.');
     const dates = importDates(project);
     if (target && !dates.size) throw new Error('이 작업 파일에는 가져올 날짜가 없어요.');
-    const selected = target ? await chooseImportDates(project, target.project, dates) : null;
+    let selected = null;
+    if (target) {
+      const existingDates = new Set([...target.project.records.map(r => r.date), ...target.project.assets.filter(datedAttachment).map(a => a.date)]);
+      selected = batch && [...dates].every(date => !existingDates.has(date)) ? dates :
+        await chooseImportDates(project, existingDates, dates, file.name);
+    }
     if (target && !selected) return false;
     const records = project.records.filter(record => !selected || selected.has(record.date));
     const attachments = project.assets.filter(asset => !selected || datedAttachment(asset) && selected.has(asset.date));
@@ -333,9 +377,11 @@
     }
     if (selected) return {month: result.month, name: result.name || '', importedDays: selected.size};
     const operations = manifest.operations || {};
-    if (operations.rows != null) localStorage.setItem(`${PREFIX}operations:${project.month}`, operations.rows); else localStorage.removeItem(`${PREFIX}operations:${project.month}`);
-    if (operations.details != null) localStorage.setItem(`${PREFIX}operations-details:${project.month}`, operations.details); else localStorage.removeItem(`${PREFIX}operations-details:${project.month}`);
-    if (operations.groups != null) localStorage.setItem(`${PREFIX}centers`, operations.groups); else localStorage.removeItem(`${PREFIX}centers`);
+    for (const [field, storageKey] of [['rows', `${PREFIX}operations:${project.month}`], ['details', `${PREFIX}operations-details:${project.month}`], ['groups', `${PREFIX}centers`]]) {
+      if (batch && localStorage.getItem(storageKey) !== null) continue;
+      if (operations[field] != null) localStorage.setItem(storageKey, operations[field]);
+      else if (!batch) localStorage.removeItem(storageKey);
+    }
     const monthKey = `${PREFIX}operations:months`;
     try { const months = JSON.parse(localStorage.getItem(monthKey) || '[]'); if (Array.isArray(months) && !months.includes(project.month)) localStorage.setItem(monthKey, JSON.stringify([...months, project.month].sort((a, b) => b.localeCompare(a)))); } catch { localStorage.setItem(monthKey, JSON.stringify([project.month])); }
     return { month: project.month, name: project.name || "" };
@@ -437,7 +483,7 @@
     const open = document.createElement('button'); open.type = 'button'; open.className = 'share-work-button'; open.textContent = '작업 공유·가져오기'; open.setAttribute('aria-haspopup', 'dialog');
     tools.append(open); header.insertBefore(tools, privateLabel);
     const modal = document.createElement('section'); modal.id = 'share-work-dialog'; modal.className = 'share-work-backdrop'; modal.hidden = true; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-labelledby', 'share-work-title');
-    modal.innerHTML = `<div class="share-work-card"><button type="button" class="share-work-close" aria-label="닫기">×</button><p class="eyebrow">작업 파일 공유</p><h2 id="share-work-title">사진과 운영현황까지 한 파일로</h2><p>저장한 월별 활동일지, 원본 PDF·한글파일, 날짜별 사진과 서명, 해당 월의 거점운영현황을 묶습니다. 받은 사람은 이 파일을 불러와 계속 편집한 다음 한글파일·엑셀·PDF로 저장할 수 있습니다.</p><label class="share-work-label">공유할 저장 작업<select id="share-work-project"></select></label><div class="share-work-actions"><button type="button" id="share-work-kakao" class="share-work-primary">카카오톡으로 보내기</button><button type="button" id="share-work-export" class="share-work-primary">파일 다운로드</button><label for="share-work-file" class="share-work-secondary">받은 작업 파일 가져오기</label><input id="share-work-file" type="file" accept=".vjournal,.pdf,.zip,.txt,text/plain,application/pdf,application/zip" hidden><button type="button" id="share-work-apply" class="share-work-primary" hidden>확인</button></div><p id="share-work-status" role="status" aria-live="polite"></p></div>`;
+    modal.innerHTML = `<div class="share-work-card"><button type="button" class="share-work-close" aria-label="닫기">×</button><p class="eyebrow">작업 파일 공유</p><h2 id="share-work-title">사진과 운영현황까지 한 파일로</h2><p>저장한 월별 활동일지, 원본 PDF·한글파일, 날짜별 사진과 서명, 해당 월의 거점운영현황을 묶습니다. 받은 사람은 이 파일을 불러와 계속 편집한 다음 한글파일·엑셀·PDF로 저장할 수 있습니다.</p><label class="share-work-label">공유할 저장 작업<select id="share-work-project"></select></label><div class="share-work-actions"><button type="button" id="share-work-kakao" class="share-work-primary">카카오톡으로 보내기</button><button type="button" id="share-work-export" class="share-work-primary">파일 다운로드</button><label for="share-work-file" class="share-work-secondary">받은 작업 파일 가져오기</label><input id="share-work-file" type="file" multiple accept=".vjournal,.pdf,.zip,.txt,text/plain,application/pdf,application/zip" hidden><button type="button" class="share-work-secondary" id="share-work-folder-button">폴더에서 파일 전체 선택</button><input id="share-work-folder" type="file" webkitdirectory multiple hidden><button type="button" id="share-work-apply" class="share-work-primary" hidden>확인</button></div><p id="share-work-status" role="status" aria-live="polite"></p></div>`;
     document.body.append(modal);
     const select = modal.querySelector('#share-work-project');
     const shareButton = modal.querySelector('#share-work-kakao');
@@ -530,7 +576,8 @@
       if (items.some(item => item.key === selected)) select.value = selected;
       if (!items.length) { const option = document.createElement('option'); option.value = ''; option.textContent = '저장한 작업이 없습니다'; select.append(option); }
     }
-    const close = () => { modal.hidden = true; resetShare(); };
+    let importing = false;
+    const close = () => { if (!importing) { modal.hidden = true; resetShare(); } };
     open.addEventListener('click', () => { refresh(); modal.hidden = false; prepareShare(); modal.querySelector('.share-work-close').focus(); });
     modal.querySelector('.share-work-close').addEventListener('click', close);
     applyImported.addEventListener('click', () => { applyImported.hidden = true; close(); });
@@ -549,22 +596,64 @@
       const button = modal.querySelector('#share-work-export'); button.disabled = true;
       try { await exportProject(item.project); } catch (error) { setStatus(error.message || '공유 파일을 만들지 못했습니다.', true); } finally { button.disabled = false; }
     });
-    modal.querySelector('#share-work-file').addEventListener('change', async event => {
-      const input = event.currentTarget, file = input.files?.[0]; if (!file) return;
-      input.disabled = true;
+    const fileInput = modal.querySelector('#share-work-file'), folderInput = modal.querySelector('#share-work-folder');
+    const folderButton = modal.querySelector('#share-work-folder-button');
+    if ('webkitdirectory' in folderInput) folderButton.onclick = () => folderInput.click();
+    else folderButton.remove();
+    async function receiveFiles(event) {
+      const input = event.currentTarget, folder = input === folderInput;
+      let files = Array.from(input.files);
+      if (!files.length || importing) return;
+      importing = true;
+      fileInput.disabled = folderInput.disabled = folderButton.disabled = true;
+      applyImported.hidden = true;
       try {
-        const imported = await importProject(file);
-        if (imported) {
+        checkUnsavedJournal();
+        if (folder) {
+          const matches = [];
+          for (const file of files) if (await isFolderWorkFile(file)) matches.push(file);
+          files = matches;
+          if (!files.length) throw new Error('이 폴더에 활동일지 작업 파일이 없어요.');
+        }
+        const batch = folder || files.length > 1;
+        if (batch) {
+          files = await chooseImportItems({
+            heading: '가져올 파일 선택', caption: `작업 파일 ${files.length}개`,
+            description: '가져올 작업 파일을 고르세요. 기존 날짜와 겹치면 덮어쓸 날짜를 따로 선택할 수 있어요.',
+            items: files.map(file => ({value: file, label: file.webkitRelativePath || file.name})),
+            unit: '개', selectLabel: '파일 전체 선택', initialAll: folder
+          });
+          if (!files) return;
+        }
+        const errors = [];
+        let lastImported = null, importedCount = 0, skipped = 0;
+        for (const file of files) {
+          try {
+            setStatus(`가져오는 중 · ${file.name}`);
+            const imported = await importProject(file, batch);
+            if (imported) { lastImported = imported; importedCount++; }
+            else skipped++;
+          } catch (error) {
+            errors.push(file.name + ' · ' + (error.message || '파일을 가져오지 못했어요.'));
+          }
+        }
+        if (lastImported) {
           applyImported.hidden = false;
-          const message = imported.importedDays ? `선택한 ${imported.importedDays}일을 가져왔어요.` : '작업과 사진을 가져왔습니다.';
-          window.dispatchEvent(new CustomEvent('volunteer-journal:imported', {detail: imported}));
-          setStatus(message);
+          window.dispatchEvent(new CustomEvent('volunteer-journal:imported', {detail: lastImported}));
           refresh();
         }
+        const result = batch ? `파일 ${importedCount}개 가져옴${skipped ? ' · ' + skipped + '개 건너뜀' : ''}` :
+          lastImported?.importedDays ? `선택한 ${lastImported.importedDays}일을 가져왔어요.` : lastImported ? '작업과 사진을 가져왔습니다.' : '';
+        setStatus([result, ...errors].filter(Boolean).join(' / '), !!errors.length);
+      } catch (error) { setStatus(error.message || '공유 파일을 가져오지 못했습니다.', true); }
+      finally {
+        input.value = '';
+        importing = false;
+        fileInput.disabled = folderInput.disabled = folderButton.disabled = false;
       }
-      catch (error) { setStatus(error.message || '공유 파일을 가져오지 못했습니다.', true); }
-      finally { input.value = ''; input.disabled = false; }
-    });
+    }
+    fileInput.addEventListener('change', receiveFiles);
+    folderInput.addEventListener('change', receiveFiles);
   }
   if (installFileReceiver()) return;
   const observer = new MutationObserver(install);

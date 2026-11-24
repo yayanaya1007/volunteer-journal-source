@@ -24,3 +24,6 @@
 .work-import-picker button { width: auto; margin: 0; border: 1px solid #cbd5e1; border-radius: 8px; padding: .55rem .85rem; color: #172033; background: white; font: inherit; cursor: pointer; }
 .work-import-picker button[type=submit] { color: white; background: #2452b8; }
 .work-import-picker button:disabled { opacity: .52; cursor: default; }
+.work-import-select { padding: 0 1.25rem .7rem; }
+.work-import-picker strong, .work-import-days label { overflow-wrap: anywhere; }
+.work-import-days input { flex: 0 0 auto; }
