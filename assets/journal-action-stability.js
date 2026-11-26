@@ -18,12 +18,44 @@ if (typeof document !== 'undefined') {
   }, true);
 }
 
-function showInlineValidation(message, target, doc) {
+// A large warning in the empty space under the original journal, readable without zooming.
+function showSourceColumnWarning(messages, target, doc) {
+  for (const old of doc.querySelectorAll('.journal-big-validation')) old.remove();
+  const column = doc.querySelector('.detail-pane .journal-source-column');
+  if (!column || !messages.length) return null;
+  const box = doc.createElement('section');
+  box.className = 'journal-big-validation';
+  box.setAttribute('role', 'alert');
+  const title = doc.createElement('h3');
+  title.textContent = '⚠ 확인이 필요해요';
+  const list = doc.createElement('ol');
+  for (const message of messages) {
+    const item = doc.createElement('li');
+    item.textContent = message;
+    list.append(item);
+  }
+  box.append(title, list);
+  if (target) {
+    const go = doc.createElement('button');
+    go.type = 'button';
+    go.textContent = '빠진 항목으로 이동';
+    go.addEventListener('click', () => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (target.type !== 'time') target.focus({ preventScroll: true });
+    });
+    box.append(go);
+  }
+  column.append(box);
+  return box;
+}
+
+function showInlineValidation(message, target, doc, messages = [message]) {
   const row = lastActionRow?.isConnected ? lastActionRow : null;
+  const bigBox = showSourceColumnWarning(messages, target, doc);
   for (const old of doc.querySelectorAll('.journal-inline-validation')) old.remove();
   for (const old of doc.querySelectorAll('.journal-validation-target')) old.classList.remove('journal-validation-target');
   if (target) target.classList.add('journal-validation-target');
-  if (!row) return false;
+  if (!row) return Boolean(bigBox);
   const box = doc.createElement('div');
   box.className = 'journal-inline-validation';
   box.setAttribute('role', 'alert');
@@ -44,7 +76,7 @@ function showInlineValidation(message, target, doc) {
   row.after(box);
   // Remove the notice once the user edits the journal again.
   const pane = doc.querySelector('.detail-pane');
-  const clear = () => { box.remove(); target?.classList.remove('journal-validation-target'); pane?.removeEventListener('input', clear, true); pane?.removeEventListener('change', clear, true); };
+  const clear = () => { box.remove(); bigBox?.remove(); target?.classList.remove('journal-validation-target'); pane?.removeEventListener('input', clear, true); pane?.removeEventListener('change', clear, true); };
   pane?.addEventListener('input', clear, true);
   pane?.addEventListener('change', clear, true);
   return true;
@@ -52,7 +84,7 @@ function showInlineValidation(message, target, doc) {
 
 // Validation keeps the page where the user pressed the button and explains what is missing there.
 // Moving to the missing item is offered as a button instead of jumping automatically.
-export function focusJournalValidation(message, doc = document) {
+export function focusJournalValidation(message, doc = document, messages = [message]) {
   const pane = doc.querySelector('.detail-pane');
   if (!pane) return false;
   const field = name => [...pane.querySelectorAll('label.field')].find(label =>
@@ -77,7 +109,7 @@ export function focusJournalValidation(message, doc = document) {
   }
   else if (message.includes('활동시간') || message.includes('시작·종료 시간')) target = [...pane.querySelectorAll('input[type="time"]')].find(input => !input.closest('.trip-edit') && !input.value) || field('시작시간');
   // A time input seeds a default on focus, so validation never focuses it here.
-  return showInlineValidation(message, target, doc) || Boolean(target);
+  return showInlineValidation(message, target, doc, messages) || Boolean(target);
 }
 
 export function installJournalActionStability(doc = document) {
