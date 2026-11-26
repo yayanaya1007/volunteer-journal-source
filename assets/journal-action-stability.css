@@ -45,3 +45,8 @@
 .journal-undated-photos { margin-top: 1rem; }
 .journal-undated-photos > summary { cursor: pointer; }
 .journal-undated-photos .photo-grid { margin-top: .75rem; grid-template-columns: 1fr; }
+
+.journal-inline-validation { max-width: 28rem; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .6rem; margin: 0 0 .6rem; padding: .55rem .7rem; border: 1px solid #fca5a5; border-radius: .5rem; background: #fef2f2; color: #b91c1c; font-size: .8125rem; line-height: 1.45; }
+.journal-inline-validation p { flex: 1 1 14rem; margin: 0; }
+.journal-inline-validation button { flex: 0 0 auto; border: 1px solid #b91c1c; border-radius: .4rem; background: #fff; color: #b91c1c; padding: .3rem .6rem; font: inherit; font-weight: 600; cursor: pointer; }
+.journal-validation-target { outline: 2px solid #dc2626; outline-offset: 2px; }

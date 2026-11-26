@@ -8,7 +8,50 @@ export function journalActionButton(target) {
   return button;
 }
 
-// Validation is an intentional navigation: take the user to the missing item.
+// The action row whose button the user pressed last; validation messages appear under it.
+let lastActionRow = null;
+const ACTION_ROWS = '.journal-review-actions, .daily-work-actions';
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', event => {
+    const row = event.target?.closest?.(ACTION_ROWS);
+    if (row) lastActionRow = row;
+  }, true);
+}
+
+function showInlineValidation(message, target, doc) {
+  const row = lastActionRow?.isConnected ? lastActionRow : null;
+  for (const old of doc.querySelectorAll('.journal-inline-validation')) old.remove();
+  for (const old of doc.querySelectorAll('.journal-validation-target')) old.classList.remove('journal-validation-target');
+  if (target) target.classList.add('journal-validation-target');
+  if (!row) return false;
+  const box = doc.createElement('div');
+  box.className = 'journal-inline-validation';
+  box.setAttribute('role', 'alert');
+  const text = doc.createElement('p');
+  text.textContent = message;
+  box.append(text);
+  if (target) {
+    const go = doc.createElement('button');
+    go.type = 'button';
+    go.textContent = '빠진 항목으로 이동';
+    go.addEventListener('click', () => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (target.type !== 'time') target.focus({ preventScroll: true });
+      box.remove();
+    });
+    box.append(go);
+  }
+  row.after(box);
+  // Remove the notice once the user edits the journal again.
+  const pane = doc.querySelector('.detail-pane');
+  const clear = () => { box.remove(); target?.classList.remove('journal-validation-target'); pane?.removeEventListener('input', clear, true); pane?.removeEventListener('change', clear, true); };
+  pane?.addEventListener('input', clear, true);
+  pane?.addEventListener('change', clear, true);
+  return true;
+}
+
+// Validation keeps the page where the user pressed the button and explains what is missing there.
+// Moving to the missing item is offered as a button instead of jumping automatically.
 export function focusJournalValidation(message, doc = document) {
   const pane = doc.querySelector('.detail-pane');
   if (!pane) return false;
@@ -33,11 +76,8 @@ export function focusJournalValidation(message, doc = document) {
       input.closest('label')?.querySelector('span')?.textContent.includes('종료시간'));
   }
   else if (message.includes('활동시간') || message.includes('시작·종료 시간')) target = [...pane.querySelectorAll('input[type="time"]')].find(input => !input.closest('.trip-edit') && !input.value) || field('시작시간');
-  if (!target) return false;
-  target.scrollIntoView({block:'center',behavior:'auto'});
-  // A time input seeds a default on focus. Validation must not fill it in.
-  if (target.type !== 'time') target.focus({preventScroll:true});
-  return true;
+  // A time input seeds a default on focus, so validation never focuses it here.
+  return showInlineValidation(message, target, doc) || Boolean(target);
 }
 
 export function installJournalActionStability(doc = document) {
