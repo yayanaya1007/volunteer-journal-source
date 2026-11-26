@@ -1,6 +1,6 @@
 import {validateActivityCounts, requiredCountLabels, canEnterActivityCount, activityCountTypeNotices, needsConsultationDetailCategory, changeActivityType} from './journal-activity-counts.js?v=20261124-related-v1';
 import {journalPhotoDropHandlers,journalPhotoFile} from './journal-photo-drop.js';
-import {focusJournalValidation} from './journal-action-stability.js?v=20261126-big-warning';
+import {focusJournalValidation} from './journal-action-stability.js?v=20261126-keep-in-place';
 import {clearSignatureBackground} from './journal-signature-transparency.js?v=20261104-grey-paper-v1';
 import {withCachedHwpxPageBreaks} from './hwpx-source-layout.js?v=20261104-date-media-v2';
 import {pdfImageToBlob,pdfPhotoImportSize} from './pdf-photo-import.js?v=20261104-large-photo-v2';

@@ -150,8 +150,31 @@ export function installJournalActionStability(doc = document) {
       saved.button.focus({ preventScroll: true });
     }
   };
+  // When a click inserts or removes content above the pressed control (for example a new
+  // trip row above "출장 추가"), keep that control where the user pressed it instead of
+  // letting the page appear to jump. Deliberate navigation (page already scrolled) is left alone.
+  const keepInPlace = event => {
+    const view = doc.defaultView;
+    const control = event.target?.closest?.('button, [role="checkbox"], [role="radio"], [role="switch"], label');
+    if (!view || !control || !control.closest('.workspace, .detail-pane')) return;
+    if (control.closest('[role="dialog"], [role="alertdialog"], dialog, .journal-big-validation, .journal-inline-validation')) return;
+    let startY = view.scrollY;
+    const startTop = control.getBoundingClientRect().top;
+    const settle = () => {
+      if (!control.isConnected || !control.getClientRects().length) return;
+      if (Math.abs(view.scrollY - startY) > 2) return;
+      if (doc.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], dialog[open]')) return;
+      const delta = control.getBoundingClientRect().top - startTop;
+      if (Math.abs(delta) > 4) { view.scrollBy(0, delta); startY = view.scrollY; }
+    };
+    view.requestAnimationFrame(() => view.requestAnimationFrame(settle));
+    view.setTimeout(settle, 350);
+    view.setTimeout(settle, 900);
+  };
+
   doc.addEventListener('mousedown', down, true);
   doc.addEventListener('click', click);
+  doc.addEventListener('click', keepInPlace, true);
   doc.addEventListener('pointerdown', preserveBottom, true);
   doc.addEventListener('wheel', releaseBottom, {passive:true});
   doc.addEventListener('touchmove', releaseBottom, {passive:true});
@@ -159,6 +182,7 @@ export function installJournalActionStability(doc = document) {
   return () => {
     doc.removeEventListener('mousedown', down, true);
     doc.removeEventListener('click', click);
+    doc.removeEventListener('click', keepInPlace, true);
     doc.removeEventListener('pointerdown', preserveBottom, true);
     doc.removeEventListener('wheel', releaseBottom);
     doc.removeEventListener('touchmove', releaseBottom);
