@@ -8,8 +8,83 @@ export function journalActionButton(target) {
   return button;
 }
 
-// Validation is an intentional navigation: take the user to the missing item.
-export function focusJournalValidation(message, doc = document) {
+// The action row whose button the user pressed last; validation messages appear under it.
+let lastActionRow = null;
+const ACTION_ROWS = '.journal-review-actions, .daily-work-actions';
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', event => {
+    const row = event.target?.closest?.(ACTION_ROWS);
+    if (row) lastActionRow = row;
+  }, true);
+}
+
+// A large warning in the empty space under the original journal, readable without zooming.
+function showSourceColumnWarning(messages, target, doc) {
+  for (const old of doc.querySelectorAll('.journal-big-validation')) old.remove();
+  const column = doc.querySelector('.detail-pane .journal-source-column');
+  if (!column || !messages.length) return null;
+  const box = doc.createElement('section');
+  box.className = 'journal-big-validation';
+  box.setAttribute('role', 'alert');
+  const title = doc.createElement('h3');
+  title.textContent = '⚠ 확인이 필요해요';
+  const list = doc.createElement('ol');
+  for (const message of messages) {
+    const item = doc.createElement('li');
+    item.textContent = message;
+    list.append(item);
+  }
+  box.append(title, list);
+  if (target) {
+    const go = doc.createElement('button');
+    go.type = 'button';
+    go.textContent = '빠진 항목으로 이동';
+    go.addEventListener('click', () => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (target.type !== 'time') target.focus({ preventScroll: true });
+    });
+    box.append(go);
+  }
+  column.append(box);
+  return box;
+}
+
+function showInlineValidation(message, target, doc, messages = [message]) {
+  const row = lastActionRow?.isConnected ? lastActionRow : null;
+  const bigBox = showSourceColumnWarning(messages, target, doc);
+  for (const old of doc.querySelectorAll('.journal-inline-validation')) old.remove();
+  for (const old of doc.querySelectorAll('.journal-validation-target')) old.classList.remove('journal-validation-target');
+  if (target) target.classList.add('journal-validation-target');
+  if (!row) return Boolean(bigBox);
+  const box = doc.createElement('div');
+  box.className = 'journal-inline-validation';
+  box.setAttribute('role', 'alert');
+  const text = doc.createElement('p');
+  text.textContent = message;
+  box.append(text);
+  if (target) {
+    const go = doc.createElement('button');
+    go.type = 'button';
+    go.textContent = '빠진 항목으로 이동';
+    go.addEventListener('click', () => {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (target.type !== 'time') target.focus({ preventScroll: true });
+      box.remove();
+    });
+    box.append(go);
+  }
+  row.after(box);
+  // Remove the notice once the user edits the journal again.
+  const pane = doc.querySelector('.detail-pane');
+  const clear = () => { box.remove(); bigBox?.remove(); target?.classList.remove('journal-validation-target'); pane?.removeEventListener('input', clear, true); pane?.removeEventListener('change', clear, true); };
+  pane?.addEventListener('input', clear, true);
+  pane?.addEventListener('change', clear, true);
+  return true;
+}
+
+// Validation keeps the page where the user pressed the button and explains what is missing there.
+// Moving to the missing item is offered as a button instead of jumping automatically.
+export function focusJournalValidation(message, doc = document, messages = [message]) {
   const pane = doc.querySelector('.detail-pane');
   if (!pane) return false;
   const field = name => [...pane.querySelectorAll('label.field')].find(label =>
@@ -33,11 +108,8 @@ export function focusJournalValidation(message, doc = document) {
       input.closest('label')?.querySelector('span')?.textContent.includes('종료시간'));
   }
   else if (message.includes('활동시간') || message.includes('시작·종료 시간')) target = [...pane.querySelectorAll('input[type="time"]')].find(input => !input.closest('.trip-edit') && !input.value) || field('시작시간');
-  if (!target) return false;
-  target.scrollIntoView({block:'center',behavior:'auto'});
-  // A time input seeds a default on focus. Validation must not fill it in.
-  if (target.type !== 'time') target.focus({preventScroll:true});
-  return true;
+  // A time input seeds a default on focus, so validation never focuses it here.
+  return showInlineValidation(message, target, doc, messages) || Boolean(target);
 }
 
 export function installJournalActionStability(doc = document) {
@@ -78,8 +150,31 @@ export function installJournalActionStability(doc = document) {
       saved.button.focus({ preventScroll: true });
     }
   };
+  // When a click inserts or removes content above the pressed control (for example a new
+  // trip row above "출장 추가"), keep that control where the user pressed it instead of
+  // letting the page appear to jump. Deliberate navigation (page already scrolled) is left alone.
+  const keepInPlace = event => {
+    const view = doc.defaultView;
+    const control = event.target?.closest?.('button, [role="checkbox"], [role="radio"], [role="switch"], label');
+    if (!view || !control || !control.closest('.workspace, .detail-pane')) return;
+    if (control.closest('[role="dialog"], [role="alertdialog"], dialog, .journal-big-validation, .journal-inline-validation')) return;
+    let startY = view.scrollY;
+    const startTop = control.getBoundingClientRect().top;
+    const settle = () => {
+      if (!control.isConnected || !control.getClientRects().length) return;
+      if (Math.abs(view.scrollY - startY) > 2) return;
+      if (doc.querySelector('[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], dialog[open]')) return;
+      const delta = control.getBoundingClientRect().top - startTop;
+      if (Math.abs(delta) > 4) { view.scrollBy(0, delta); startY = view.scrollY; }
+    };
+    view.requestAnimationFrame(() => view.requestAnimationFrame(settle));
+    view.setTimeout(settle, 350);
+    view.setTimeout(settle, 900);
+  };
+
   doc.addEventListener('mousedown', down, true);
   doc.addEventListener('click', click);
+  doc.addEventListener('click', keepInPlace, true);
   doc.addEventListener('pointerdown', preserveBottom, true);
   doc.addEventListener('wheel', releaseBottom, {passive:true});
   doc.addEventListener('touchmove', releaseBottom, {passive:true});
@@ -87,6 +182,7 @@ export function installJournalActionStability(doc = document) {
   return () => {
     doc.removeEventListener('mousedown', down, true);
     doc.removeEventListener('click', click);
+    doc.removeEventListener('click', keepInPlace, true);
     doc.removeEventListener('pointerdown', preserveBottom, true);
     doc.removeEventListener('wheel', releaseBottom);
     doc.removeEventListener('touchmove', releaseBottom);
